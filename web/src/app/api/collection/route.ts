@@ -14,11 +14,9 @@ import { NextResponse } from "next/server";
 
 export const revalidate = 3600;
 
-// Pinata-pinned tier artworks (CIDv1 raw codec). Same hashes used by
-// /api/agent/[id]/route.ts so the collection card and per-token images
-// share an immutable provenance.
-const IPFS_COLLECTION = "ipfs://bafkreibfix3x4i3tlgcauh7r3a7urflqc6q2jd4qqec4eusglxqhqrnpj4";
-const IPFS_GOLD       = "ipfs://bafkreidcfqawzolh6rxc4hl2qq43cagmwgqwr5xjo5wnubrho7etrhu724";
+// IPFS folder pin (CIDv1 dag-pb) — same root the /api/agent/[id] route
+// uses for per-token variants. One CID, immutable, content-addressed.
+const IPFS_ROOT = "ipfs://bafybeiauhz7wvnvbw3iqvlpygpinhqfuv4ldh6mv3d3zb7r6kfcztcn6lq";
 
 export async function GET() {
   // OpenSea collection metadata standard:
@@ -28,14 +26,18 @@ export async function GET() {
     description:
       "Soulbound ERC-8004 identity NFTs for $NONCE participants. One per " +
       "address, claimable once a wallet holds at least 1 NONCE. The tier " +
-      "badge — Initiate, Bronze, Silver, Gold — is computed live from " +
-      "the holder's current NONCE balance, so the NFT visibly upgrades as " +
-      "you accumulate. Tokens are non-transferable: a transfer attempt " +
-      "reverts at the contract level. Royalties are 0% by design — these " +
-      "are identity, not assets.",
-    image: IPFS_COLLECTION,
-    banner_image: IPFS_COLLECTION,
-    featured_image: IPFS_GOLD,
+      "badge — Initiate, Bronze, Silver, Gold, Platinum — is computed " +
+      "live from the holder's current NONCE balance, so the NFT visibly " +
+      "upgrades as you accumulate. 10 unique artworks (5 tiers × 2 " +
+      "variants), each representing a transaction lifecycle state on " +
+      "Ethereum. Tokens are non-transferable: a transfer attempt reverts " +
+      "at the contract level. Royalties are 0% by design — these are " +
+      "identity, not assets.",
+    image: `${IPFS_ROOT}/collection.png`,
+    banner_image: `${IPFS_ROOT}/collection.png`,
+    // Featured = Platinum tier's Confirmation State, the most ornate
+    // artwork of the 10, used as collection highlight.
+    featured_image: `${IPFS_ROOT}/NONCE_10.png`,
     external_link: "https://nonceagent8004.com",
     collaborators: [],
     // Royalty config — soulbound collection, no secondary trade signal.

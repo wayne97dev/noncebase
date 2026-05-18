@@ -63,13 +63,18 @@ const nonceAbi = parseAbi([
 // goes to the Initiate tier (start of the journey); token #10
 // (Confirmation State) goes to Platinum (final state).
 //
-// Images currently served from /public/nft on the same domain. When the
-// user re-pins the 10 NONCE PNGs to IPFS, swap each variant URL to its
-// ipfs:// CID for max immutability.
+// Images pinned to IPFS via Pinata as a single CIDv1 folder. Each NFT's
+// image field resolves to ipfs://<folder>/NONCE_X.png — every wallet and
+// marketplace (OpenSea / MetaMask / Rarible / Blur) accepts the ipfs://
+// scheme and resolves through its preferred gateway. The folder pin is
+// content-addressed, so the URLs are provably immutable forever; even if
+// Pinata drops the pin tomorrow, anyone re-pinning the same 11 PNGs gets
+// the identical CID and the URLs keep resolving.
+const IPFS_ROOT = "ipfs://bafybeiauhz7wvnvbw3iqvlpygpinhqfuv4ldh6mv3d3zb7r6kfcztcn6lq";
 
 type Tier = {
   name: string;
-  /** Two artwork paths (or ipfs:// URIs) — index 0 and 1 picked by variantFor. */
+  /** Two ipfs:// URIs — index 0 and 1 picked by variantFor. */
   variants: readonly [string, string];
   /** State name from the artist's collection.json, one per variant. */
   variantNames: readonly [string, string];
@@ -84,7 +89,7 @@ type Tier = {
 const TIERS = {
   platinum: {
     name: "Platinum",
-    variants: ["/nft/NONCE_9.png", "/nft/NONCE_10.png"],
+    variants: [`${IPFS_ROOT}/NONCE_9.png`, `${IPFS_ROOT}/NONCE_10.png`],
     variantNames: ["Transition State", "Confirmation State"],
     color: "#e5e4e2",
     bg: "0e0e0d",
@@ -92,7 +97,7 @@ const TIERS = {
   },
   gold: {
     name: "Gold",
-    variants: ["/nft/NONCE_7.png", "/nft/NONCE_8.png"],
+    variants: [`${IPFS_ROOT}/NONCE_7.png`, `${IPFS_ROOT}/NONCE_8.png`],
     variantNames: ["Archived State", "Echo State"],
     color: "#f4c430",
     bg: "0e0a02",
@@ -100,7 +105,7 @@ const TIERS = {
   },
   silver: {
     name: "Silver",
-    variants: ["/nft/NONCE_5.png", "/nft/NONCE_6.png"],
+    variants: [`${IPFS_ROOT}/NONCE_5.png`, `${IPFS_ROOT}/NONCE_6.png`],
     variantNames: ["Replay Barrier", "Finalized State"],
     color: "#c0c0c8",
     bg: "0c0c10",
@@ -108,7 +113,7 @@ const TIERS = {
   },
   bronze: {
     name: "Bronze",
-    variants: ["/nft/NONCE_3.png", "/nft/NONCE_4.png"],
+    variants: [`${IPFS_ROOT}/NONCE_3.png`, `${IPFS_ROOT}/NONCE_4.png`],
     variantNames: ["Ordered Execution", "Verified State"],
     color: "#cd7f32",
     bg: "0e0801",
@@ -116,7 +121,7 @@ const TIERS = {
   },
   initiate: {
     name: "Initiate",
-    variants: ["/nft/NONCE_1.png", "/nft/NONCE_2.png"],
+    variants: [`${IPFS_ROOT}/NONCE_1.png`, `${IPFS_ROOT}/NONCE_2.png`],
     variantNames: ["Genesis Signal", "Pending State"],
     color: "#7a7a82",
     bg: "08080a",
@@ -195,7 +200,6 @@ export async function GET(
   const variantName = tier.variantNames[variant];
   const variantPath = tier.variants[variant];
   const nonceHeld = Number(balance / 10n ** 18n);
-  const origin = new URL(request.url).origin;
 
   const metadata = {
     name: `Nonce Miner Agent #${tokenId} — ${variantName}`,
@@ -206,7 +210,8 @@ export async function GET(
       "fixed at mint time, hashed deterministically from the tokenId. " +
       "Minimum 1 NONCE held to claim; transfers are blocked at the " +
       "contract level.",
-    image: `${origin}${variantPath}`,
+    // variantPath is already a full ipfs:// URI — no origin prefix needed.
+    image: variantPath,
     background_color: tier.bg,
     external_url: `https://basescan.org/address/${owner}`,
     attributes: [
