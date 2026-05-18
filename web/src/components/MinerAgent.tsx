@@ -26,7 +26,7 @@ import { formatUnits } from "viem";
  * so flipping CLAIM_LIVE to true is the only change needed at launch.
  */
 
-const CLAIM_LIVE = false;
+const CLAIM_LIVE = true;
 
 // 5 tiers × 2 variants each = 10 NFT artworks. Variant per token is
 // picked deterministically from the tokenId hash (see MinerAgent.variantOf

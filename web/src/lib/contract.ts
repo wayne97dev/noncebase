@@ -16,10 +16,13 @@ export const NONCE_ADDRESS: Address =
 export const NONCE_DECIMALS = 18;
 export const NONCE_SYMBOL = "NONCE";
 
-// MinerAgent ERC-721 contract address. Filled in after MinerAgent
-// deploys against the Nonce token above. See CLAIM_LIVE in MinerAgent.tsx.
+// MinerAgent ERC-721 contract address, deployed against the Nonce token
+// above. Verified on Basescan. CLAIM_LIVE is also flipped on in
+// MinerAgent.tsx so the claim button is active.
+// tx: 0xabaef35db822a0eea2f6dd948235b937c9d7dc63a09e8daafe45c478acb88e73
+// block: 46169471
 export const MINER_AGENT_ADDRESS: Address =
-  "0x0000000000000000000000000000000000000000";
+  "0x45F45e470E974E720614d31815c42dbA18F8b4cF";
 
 // V4 PoolManager on Base mainnet — used to display pool info, not
 // required for contract reads. Verify against current Uniswap V4
