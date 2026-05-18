@@ -14,7 +14,7 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://CUSTOM_DOMAIN_TBD"),
+  metadataBase: new URL("https://nonceagent8004.com"),
   title: "Nonce — mined ERC-20 agent",
   description:
     "Nonce ($NONCE) is a mined ERC-20 with a self-hook and an ERC-8004 agent identity. The token, the V4 hook, and the PoW miner are the same contract.",
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     title: "Nonce — mined ERC-20 agent",
     description:
       "Mined ERC-20 with a self-hook. ERC-8004 agent identity. Soulbound Miner Agent NFTs. No owner, no mint key, no proxy.",
-    url: "https://CUSTOM_DOMAIN_TBD",
+    url: "https://nonceagent8004.com",
     siteName: "Nonce",
     images: [{ url: "/logo.png", width: 1024, height: 1024, alt: "Nonce sigil" }],
     type: "website",

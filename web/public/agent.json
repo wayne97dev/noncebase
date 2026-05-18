@@ -10,9 +10,9 @@
     "namespace": "eip155"
   },
   "endpoints": {
-    "contract": "base://NONCE_BASE_ADDRESS",
-    "frontend": "https://CUSTOM_DOMAIN_TBD",
-    "whitepaper": "https://CUSTOM_DOMAIN_TBD/whitepaper.pdf",
+    "contract": "base://0xE7bADd12bdf070e925A55A98c981f3aBAB4f20cc",
+    "frontend": "https://nonceagent8004.com",
+    "whitepaper": "https://nonceagent8004.com/whitepaper.pdf",
     "source": "https://github.com/wayne97dev/mineeth"
   },
   "capabilities": [
@@ -38,10 +38,10 @@
       "via": "uniswap-v4-pool",
       "poolKey": {
         "currency0": "0x0000000000000000000000000000000000000000",
-        "currency1": "NONCE_BASE_ADDRESS",
+        "currency1": "0xE7bADd12bdf070e925A55A98c981f3aBAB4f20cc",
         "fee": 0,
         "tickSpacing": 200,
-        "hooks": "NONCE_BASE_ADDRESS"
+        "hooks": "0xE7bADd12bdf070e925A55A98c981f3aBAB4f20cc"
       }
     },
     {

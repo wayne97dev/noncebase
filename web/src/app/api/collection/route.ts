@@ -1,9 +1,9 @@
 // OpenSea collection-level metadata endpoint, exposed at
 //
-//   https://CUSTOM_DOMAIN_TBD/api/collection
+//   https://nonceagent8004.com/api/collection
 //
 // After the production MinerAgent deploys we call
-//   MinerAgent.setExternalContractURI("https://CUSTOM_DOMAIN_TBD/api/collection")
+//   MinerAgent.setExternalContractURI("https://nonceagent8004.com/api/collection")
 // so OpenSea / collection aggregators pull the rich card from here instead
 // of falling back to the on-chain SVG default in MinerAgent._defaultContractURI.
 //
@@ -36,7 +36,7 @@ export async function GET() {
     image: IPFS_COLLECTION,
     banner_image: IPFS_COLLECTION,
     featured_image: IPFS_GOLD,
-    external_link: "https://CUSTOM_DOMAIN_TBD",
+    external_link: "https://nonceagent8004.com",
     collaborators: [],
     // Royalty config — soulbound collection, no secondary trade signal.
     // Some marketplaces still expect these fields to be present.
