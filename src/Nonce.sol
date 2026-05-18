@@ -52,9 +52,14 @@ contract Nonce is ERC20, IHooks, ReentrancyGuard {
 
     uint256 public constant ERA_MINTS              = 100_000;
     uint256 public constant BASE_REWARD            = 100e18;
-    uint256 public constant EPOCH_BLOCKS           = 100;
+    // Base produces a block every ~2 seconds (vs Ethereum mainnet's 12s).
+    // EPOCH_BLOCKS = 600 → ~20 min epoch (same wall-clock cadence as the
+    // original Ethereum design). TARGET_BLOCKS_PER_MINT = 30 → 1 mint per
+    // ~60 s on average, same as the mainnet target. Scaling 6× preserves
+    // the tokenomics duration (18.9M NONCE released over ~131 days).
+    uint256 public constant EPOCH_BLOCKS           = 600;
     uint256 public constant ADJUSTMENT_INTERVAL    = 2_016;
-    uint256 public constant TARGET_BLOCKS_PER_MINT = 5;
+    uint256 public constant TARGET_BLOCKS_PER_MINT = 30;
     uint256 public constant MAX_MINTS_PER_BLOCK    = 10;
 
     uint256 public constant SWAP_FEE_BPS = 100;

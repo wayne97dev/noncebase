@@ -301,8 +301,9 @@ contract NonceTest is Test {
         assertEq(nonce.GENESIS_CAP(), 1_050_000e18);
         assertEq(nonce.BASE_REWARD(), 100e18);
         assertEq(nonce.ERA_MINTS(), 100_000);
-        assertEq(nonce.EPOCH_BLOCKS(), 100);
+        assertEq(nonce.EPOCH_BLOCKS(), 600);
         assertEq(nonce.ADJUSTMENT_INTERVAL(), 2_016);
+        assertEq(nonce.TARGET_BLOCKS_PER_MINT(), 30);
         assertEq(nonce.MAX_MINTS_PER_BLOCK(), 10);
         assertEq(nonce.name(), "Nonce");
         assertEq(nonce.symbol(), "NONCE");

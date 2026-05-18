@@ -29,13 +29,12 @@ Logic forked 1:1 from `hash256.org` (MIT). Branding and frontend are new.
   contract. `controller` (the address that deployed the contract) calls
   `claimFees()` to withdraw.
 
-> ⚠ **Base block time = 2s** vs Ethereum's 12s. The constants
-> `EPOCH_BLOCKS = 100` and `TARGET_BLOCKS_PER_MINT = 5` are inherited from
-> the Ethereum fork and assume 12s blocks. On Base they translate to a
-> 3.3-minute epoch and a target of 1 mint per 10 seconds, ~6× faster than
-> the original tokenomics. If you want to keep the mainnet wall-clock
-> cadence (20-min epoch, 1 mint/min), bump `EPOCH_BLOCKS` to 600 and
-> `TARGET_BLOCKS_PER_MINT` to 30 in `src/Nonce.sol` before deploying.
+> **Base block-time scaling applied.** Base produces ~2s blocks (vs
+> Ethereum's 12s), so the timing constants were scaled 6× to preserve
+> the original wall-clock tokenomics:
+> `EPOCH_BLOCKS = 600` → ~20 min epoch, `TARGET_BLOCKS_PER_MINT = 30` →
+> ~1 mint per minute. 18.9M NONCE released over ~131 days at target
+> rate, matching the Ethereum design intent.
 
 ## Setup
 
