@@ -43,7 +43,12 @@ type Activity = {
 };
 
 const MAX_VISIBLE = 12;
-const LOOKBACK_BLOCKS = 300_000n; // ~1 week on Base at 2s/block
+// 10k blocks = ~5.5 hours on Base at 2s/block. Public RPCs (publicnode,
+// alchemy free tier) cap getLogs ranges around 10k blocks per call;
+// anything larger gets rejected as "range too large". For a recent-
+// activity feed 5.5 hours is plenty — older history can be re-fetched
+// in chunks if we ever need it.
+const LOOKBACK_BLOCKS = 10_000n;
 const SECONDS_PER_BLOCK = 2;      // Base produces a block every ~2 seconds
 
 /**
@@ -175,13 +180,30 @@ export function RecentMints() {
           toBlock: currentBlock,
         } as const;
 
-        const [genLogs, minedLogs, feeLogs] = await Promise.all([
+        // Promise.allSettled (not Promise.all): if any single event type
+        // fetch fails (RPC rejects range, transient 429, etc) the other
+        // two still populate the feed instead of nothing showing.
+        const settled = await Promise.allSettled([
           publicClient.getLogs({ ...baseFilter, event: eventGenesisMint }),
           publicClient.getLogs({ ...baseFilter, event: eventMined }),
           publicClient.getLogs({ ...baseFilter, event: eventFeeCollected }),
         ]);
 
         if (cancelled) return;
+
+        const genLogs   = settled[0].status === "fulfilled" ? settled[0].value : [];
+        const minedLogs = settled[1].status === "fulfilled" ? settled[1].value : [];
+        const feeLogs   = settled[2].status === "fulfilled" ? settled[2].value : [];
+
+        // Surface partial failures in dev console so we can spot a flaky
+        // RPC quickly without breaking the UI.
+        settled.forEach((r, i) => {
+          if (r.status === "rejected") {
+            const labels = ["GenesisMint", "Mined", "FeeCollected"];
+            console.warn(`[activity] getLogs ${labels[i]} failed:`, r.reason);
+          }
+        });
+
         // seenAt is derived per-event from the block number so each row
         // shows its actual on-chain age, not the moment the page loaded.
         const fresh: Activity[] = [
@@ -212,10 +234,10 @@ export function RecentMints() {
         ];
 
         insert(fresh);
-      } catch {
-        // Public RPCs sometimes 429 on large getLogs windows. Swallow —
-        // the live watcher below will still populate the feed going
-        // forward.
+      } catch (err) {
+        // Catches a setup-level failure (publicClient unavailable, etc).
+        // Per-event errors are now handled inside allSettled above.
+        console.warn("[activity] historical fetch setup failed:", err);
       } finally {
         if (!cancelled) setLoading(false);
       }
