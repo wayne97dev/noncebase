@@ -15,14 +15,14 @@ const mono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://nonceagent8004.com"),
-  title: "Nonce — mined ERC-20 agent",
+  title: "Nonce — mined ERC-8004 agent",
   description:
-    "Nonce ($NONCE) is a mined ERC-20 with a self-hook and an ERC-8004 agent identity. The token, the V4 hook, and the PoW miner are the same contract.",
+    "Nonce ($NONCE) is a mined ERC-8004 agent with a Uniswap V4 self-hook. The token, the V4 hook, and the PoW miner are the same contract.",
   icons: { icon: "/favicon.png" },
   openGraph: {
-    title: "Nonce — mined ERC-20 agent",
+    title: "Nonce — mined ERC-8004 agent",
     description:
-      "Mined ERC-20 with a self-hook. ERC-8004 agent identity. Soulbound Miner Agent NFTs. No owner, no mint key, no proxy.",
+      "Mined ERC-8004 agent with a self-hook. Soulbound Miner Agent NFTs. No owner, no mint key, no proxy.",
     url: "https://nonceagent8004.com",
     siteName: "Nonce",
     images: [{ url: "/logo.png", width: 1024, height: 1024, alt: "Nonce sigil" }],
@@ -30,9 +30,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Nonce — mined ERC-20 agent",
+    title: "Nonce — mined ERC-8004 agent",
     description:
-      "Mined ERC-20 with a self-hook. ERC-8004 agent identity. Soulbound Miner Agent NFTs.",
+      "Mined ERC-8004 agent with a self-hook. Soulbound Miner Agent NFTs.",
     images: ["/logo.png"],
   },
 };

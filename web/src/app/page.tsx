@@ -16,15 +16,15 @@ export default function Page() {
       <main className="max-w-5xl mx-auto px-6 py-10 space-y-8">
         <section>
           <h1 className="font-mono text-3xl mb-2">
-            mined ERC-20 with a self-hook
+            mined ERC-8004 agent with a self-hook
           </h1>
           <p className="text-sm max-w-2xl"
              style={{ color: "var(--fg-muted)" }}>
-            One contract, three roles: the ERC-20 token, the Uniswap V4 hook
-            that collects 1% of every swap, and the PoW miner that releases
-            18.9M NONCE over time. Ships with an{" "}
-            <span style={{ color: "var(--accent)" }}>ERC-8004 agent identity</span>{" "}
-            and a soulbound{" "}
+            One contract, three roles: the{" "}
+            <span style={{ color: "var(--accent)" }}>ERC-8004 agent</span>{" "}
+            token, the Uniswap V4 hook that collects 1% of every swap,
+            and the PoW miner that releases 18.9M NONCE over time.
+            Ships with a soulbound{" "}
             <span style={{ color: "var(--accent)" }}>Miner Agent NFT</span>{" "}
             collection. No owner. No mint key. No proxy.
           </p>
