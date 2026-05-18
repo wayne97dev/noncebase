@@ -43,12 +43,12 @@ type Activity = {
 };
 
 const MAX_VISIBLE = 12;
-const LOOKBACK_BLOCKS = 50_000n; // ~1 week on mainnet
-const SECONDS_PER_BLOCK = 12;    // mainnet average
+const LOOKBACK_BLOCKS = 300_000n; // ~1 week on Base at 2s/block
+const SECONDS_PER_BLOCK = 2;      // Base produces a block every ~2 seconds
 
 /**
- * Estimate the wall-clock time a past block was mined at. Mainnet is rock-
- * steady at ~12s/block; this is accurate to within a few seconds across
+ * Estimate the wall-clock time a past block was mined at. Base is rock-
+ * steady at ~2s/block; this is accurate to within a few seconds across
  * recent ranges. Avoids an extra `getBlock` round-trip per event.
  */
 function blockTimestampMs(eventBlock: bigint, currentBlock: bigint): number {
