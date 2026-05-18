@@ -7,13 +7,13 @@ import {
   useBlockNumber,
 } from "wagmi";
 import { formatUnits, parseAbiItem, type Address } from "viem";
-import { DAEMON_ADDRESS, DAEMON_SYMBOL } from "@/lib/contract";
+import { NONCE_ADDRESS, NONCE_SYMBOL } from "@/lib/contract";
 
 /**
- * Unified on-chain activity feed for the Daemon contract. Surfaces the three
+ * Unified on-chain activity feed for the Nonce contract. Surfaces the three
  * meaningful event types into a single chronological list:
  *
- *   - GenesisMint   buyer paid ETH for raw DMN during the pre-seed phase
+ *   - GenesisMint   buyer paid ETH for raw NONCE during the pre-seed phase
  *   - Mined         miner found a valid nonce, received the era's reward
  *   - FeeCollected  someone swapped on the V4 pool, 1% landed on the contract
  *
@@ -32,8 +32,8 @@ type Activity = {
   kind: Kind;
   actor: Address;
   /** Amount tied to the event:
-   *  - genesis: DMN tokens minted
-   *  - mined: DMN reward
+   *  - genesis: NONCE tokens minted
+   *  - mined: NONCE reward
    *  - buy/sell: ETH fee (1% of trade size) */
   amount: bigint;
   txHash: `0x${string}`;
@@ -94,7 +94,7 @@ function labelFor(act: Activity): { tag: string; color: string; line: React.Reac
             {actor}{" "}
             <span style={{ color: "var(--fg)" }}>bought</span>{" "}
             <span style={{ color: "var(--accent)" }}>
-              {formatUnits(act.amount, 18)} {DAEMON_SYMBOL}
+              {formatUnits(act.amount, 18)} {NONCE_SYMBOL}
             </span>
           </>
         ),
@@ -108,7 +108,7 @@ function labelFor(act: Activity): { tag: string; color: string; line: React.Reac
             {actor}{" "}
             <span style={{ color: "var(--fg)" }}>mined</span>{" "}
             <span style={{ color: "var(--accent)" }}>
-              {formatUnits(act.amount, 18)} {DAEMON_SYMBOL}
+              {formatUnits(act.amount, 18)} {NONCE_SYMBOL}
             </span>
           </>
         ),
@@ -122,7 +122,7 @@ function labelFor(act: Activity): { tag: string; color: string; line: React.Reac
           <>
             {actor}{" "}
             <span style={{ color: "var(--fg)" }}>
-              {act.kind === "buy" ? "bought" : "sold"} DMN, fee
+              {act.kind === "buy" ? "bought" : "sold"} NONCE, fee
             </span>{" "}
             <span style={{ color: "var(--accent)" }}>
               {formatUnits(act.amount, 18)} ETH
@@ -170,7 +170,7 @@ export function RecentMints() {
         const fromBlock =
           currentBlock > LOOKBACK_BLOCKS ? currentBlock - LOOKBACK_BLOCKS : 0n;
         const baseFilter = {
-          address: DAEMON_ADDRESS,
+          address: NONCE_ADDRESS,
           fromBlock,
           toBlock: currentBlock,
         } as const;
@@ -233,7 +233,7 @@ export function RecentMints() {
 
   // ─── Live watchers ──────────────────────────────────────────────────
   useWatchContractEvent({
-    address: DAEMON_ADDRESS,
+    address: NONCE_ADDRESS,
     abi: [eventGenesisMint],
     eventName: "GenesisMint",
     onLogs(logs) {
@@ -253,7 +253,7 @@ export function RecentMints() {
   });
 
   useWatchContractEvent({
-    address: DAEMON_ADDRESS,
+    address: NONCE_ADDRESS,
     abi: [eventMined],
     eventName: "Mined",
     onLogs(logs) {
@@ -272,7 +272,7 @@ export function RecentMints() {
   });
 
   useWatchContractEvent({
-    address: DAEMON_ADDRESS,
+    address: NONCE_ADDRESS,
     abi: [eventFeeCollected],
     eventName: "FeeCollected",
     onLogs(logs) {

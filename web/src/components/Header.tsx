@@ -11,13 +11,13 @@ export function Header() {
           <a href="/" className="app-logo">
             <Image
               src="/logo.png"
-              alt="Daemon"
+              alt="Nonce"
               width={32}
               height={32}
               priority
               className="app-logo-mark"
             />
-            <span className="app-logo-text">DAEMON</span>
+            <span className="app-logo-text">NONCE</span>
           </a>
           <nav className="hidden sm:flex gap-7">
             <a href="#genesis" className="nav-link">genesis</a>

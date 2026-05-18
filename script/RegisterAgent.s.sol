@@ -10,7 +10,7 @@ interface IIdentityRegistry {
     function ownerOf(uint256 tokenId) external view returns (address);
 }
 
-/// @notice Registers DMN as an ERC-8004 agent on the chain-appropriate
+/// @notice Registers NONCE as an ERC-8004 agent on the chain-appropriate
 ///         Identity Registry. This fork targets Base mainnet; the Base
 ///         registry address must be supplied via env var until/unless
 ///         we know a canonical deployment.
@@ -22,10 +22,10 @@ interface IIdentityRegistry {
 ///   (and PRIVATE_KEY or --account, the wallet that becomes the agent NFT owner)
 ///
 /// Example:
-///   AGENT_URI=https://daemon-base.com/agent.json \
+///   AGENT_URI=https://nonce-base.com/agent.json \
 ///   IDENTITY_REGISTRY=0x...                       \
 ///   forge script script/RegisterAgent.s.sol      \
-///     --rpc-url $BASE_RPC --account daemon-base --broadcast
+///     --rpc-url $BASE_RPC --account nonce-base --broadcast
 contract RegisterAgent is Script {
     // Ethereum reference deployments (kept for cross-chain awareness; the
     // active fork is on Base — set IDENTITY_REGISTRY env var).

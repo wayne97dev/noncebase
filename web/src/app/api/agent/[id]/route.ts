@@ -10,22 +10,30 @@
 //
 //   https://<domain>/api/agent/<N>.json
 //
-// which routes here. We then read the owner's current DMN balance on-chain,
-// pick the matching tier (Initiate / Bronze / Silver / Gold), and return an
-// OpenSea-compatible JSON pointing at the static tier PNG in /public/nft.
+// which routes here. We then:
+//   1. Read ownerOf(tokenId) on MinerAgent to get the holder.
+//   2. Read balanceOf(owner) on Nonce to get their current token holdings.
+//   3. Map balance → tier (Initiate / Bronze / Silver / Gold / Platinum).
+//   4. Map tokenId → variant (0 or 1) via deterministic hash, mirroring
+//      MinerAgent.variantOf(tokenId).
+//   5. Return OpenSea-compatible JSON pointing at the matching NONCE_*.png.
 //
-// This is the "Option B" architecture: designer art frozen as four
-// immutable PNGs, but the tier the NFT *displays* is recomputed live from
-// chain state — so a wallet that grows from Bronze to Gold visibly upgrades.
+// 10 NFT artworks total (5 tiers × 2 variants), each named after a state
+// in a transaction lifecycle. The variant is fixed per tokenId; the tier
+// recomputes live with every metadata fetch — so a wallet that grows from
+// Silver to Gold visibly upgrades its badge without any on-chain action.
 
 import { NextRequest, NextResponse } from "next/server";
-import { createPublicClient, http, parseAbi } from "viem";
+import {
+  createPublicClient,
+  http,
+  parseAbi,
+  encodeAbiParameters,
+  keccak256,
+} from "viem";
 import { base, baseSepolia } from "viem/chains";
 
 // ───────── Configuration ─────────
-// These must be set as env vars after each Base mainnet (or Base Sepolia
-// test) deploy. We deliberately don't hardcode addresses so the same code
-// can serve both chains with separate Netlify deploy contexts if needed.
 const CHAIN_ID = Number(process.env.NFT_CHAIN_ID ?? "8453"); // Base mainnet
 const CHAIN = CHAIN_ID === 84532 ? baseSepolia : base;
 const RPC_URL =
@@ -33,7 +41,7 @@ const RPC_URL =
     ? "https://base-sepolia-rpc.publicnode.com"
     : "https://base-rpc.publicnode.com");
 
-const DAEMON_ADDRESS = (process.env.NFT_DAEMON_ADDRESS ??
+const NONCE_ADDRESS = (process.env.NFT_NONCE_ADDRESS ??
   "0x0000000000000000000000000000000000000000") as `0x${string}`;
 const MINER_AGENT_ADDRESS = (process.env.NFT_MINER_AGENT_ADDRESS ??
   "0x0000000000000000000000000000000000000000") as `0x${string}`;
@@ -44,75 +52,110 @@ const minerAgentAbi = parseAbi([
   "function ownerOf(uint256 tokenId) view returns (address)",
 ]);
 
-const daemonAbi = parseAbi([
+const nonceAbi = parseAbi([
   "function balanceOf(address account) view returns (uint256)",
 ]);
 
-// ───────── Tier definitions (mirror MinerAgent._tier) ─────────
+// ───────── Tier × variant table ─────────
+//
+// Each tier has TWO artwork variants drawn from the 10-piece NONCE
+// collection. Mapping by narrative progression: token #1 (Genesis Signal)
+// goes to the Initiate tier (start of the journey); token #10
+// (Confirmation State) goes to Platinum (final state).
+//
+// Images currently served from /public/nft on the same domain. When the
+// user re-pins the 10 NONCE PNGs to IPFS, swap each variant URL to its
+// ipfs:// CID for max immutability.
+
 type Tier = {
   name: string;
-  /** Decentralized IPFS URI — let the consuming marketplace (OpenSea,
-   * MetaMask, Rarible, etc.) resolve through its preferred gateway. */
-  image: string;
-  /** Hex color with leading "#", used for OpenSea trait swatch */
+  /** Two artwork paths (or ipfs:// URIs) — index 0 and 1 picked by variantFor. */
+  variants: readonly [string, string];
+  /** State name from the artist's collection.json, one per variant. */
+  variantNames: readonly [string, string];
+  /** Hex with leading "#", used for OpenSea trait swatch. */
   color: string;
-  /** Same color WITHOUT leading "#", OpenSea spec for background_color */
+  /** Same color without "#", OpenSea spec for background_color. */
   bg: string;
-  /** Minimum DMN held to qualify for this tier */
-  minDmn: number;
+  /** Floor balance in whole NONCE to qualify for this tier. */
+  minNonce: number;
 };
 
-// Pinata-pinned CIDv1 raw-codec hashes of the four tier artworks. The
-// content is content-addressed, so the CIDs are an immutable proof the
-// image never changed since pinning. Even if Pinata removes the pin,
-// anyone re-pinning the same PNG to IPFS gets the identical CID.
 const TIERS = {
+  platinum: {
+    name: "Platinum",
+    variants: ["/nft/NONCE_9.png", "/nft/NONCE_10.png"],
+    variantNames: ["Transition State", "Confirmation State"],
+    color: "#e5e4e2",
+    bg: "0e0e0d",
+    minNonce: 1_000_000,
+  },
   gold: {
     name: "Gold",
-    image: "ipfs://bafkreidcfqawzolh6rxc4hl2qq43cagmwgqwr5xjo5wnubrho7etrhu724",
+    variants: ["/nft/NONCE_7.png", "/nft/NONCE_8.png"],
+    variantNames: ["Archived State", "Echo State"],
     color: "#f4c430",
     bg: "0e0a02",
-    minDmn: 100_000,
+    minNonce: 100_000,
   },
   silver: {
     name: "Silver",
-    image: "ipfs://bafkreiflpuppfyebzcyerk2libizrdosklefg46ztnyymvsvmwnnsdgv24",
+    variants: ["/nft/NONCE_5.png", "/nft/NONCE_6.png"],
+    variantNames: ["Replay Barrier", "Finalized State"],
     color: "#c0c0c8",
     bg: "0c0c10",
-    minDmn: 10_000,
+    minNonce: 10_000,
   },
   bronze: {
     name: "Bronze",
-    image: "ipfs://bafkreigihsvsazqdyuykw4xsphzlhw6vgmd6is7so4y56s27ivmb7u4leq",
+    variants: ["/nft/NONCE_3.png", "/nft/NONCE_4.png"],
+    variantNames: ["Ordered Execution", "Verified State"],
     color: "#cd7f32",
     bg: "0e0801",
-    minDmn: 1_000,
+    minNonce: 1_000,
   },
   initiate: {
     name: "Initiate",
-    image: "ipfs://bafkreifzpzicqem3o5rpcxgvxcz5xuj7tw5nfm7pde5l4ejsc4kepogr2e",
+    variants: ["/nft/NONCE_1.png", "/nft/NONCE_2.png"],
+    variantNames: ["Genesis Signal", "Pending State"],
     color: "#7a7a82",
     bg: "08080a",
-    minDmn: 0,
+    minNonce: 0,
   },
 } as const satisfies Record<string, Tier>;
 
 function tierFor(balance: bigint): Tier {
-  if (balance >= 100_000n * 10n ** 18n) return TIERS.gold;
-  if (balance >=  10_000n * 10n ** 18n) return TIERS.silver;
-  if (balance >=   1_000n * 10n ** 18n) return TIERS.bronze;
+  if (balance >= 1_000_000n * 10n ** 18n) return TIERS.platinum;
+  if (balance >=   100_000n * 10n ** 18n) return TIERS.gold;
+  if (balance >=    10_000n * 10n ** 18n) return TIERS.silver;
+  if (balance >=     1_000n * 10n ** 18n) return TIERS.bronze;
   return TIERS.initiate;
+}
+
+/**
+ * Mirrors MinerAgent.variantOf(tokenId) on-chain. Solidity computes
+ *   keccak256(abi.encode(tokenId, "nonce-variant")) % 2
+ * viem's encodeAbiParameters produces byte-identical input to Solidity's
+ * abi.encode, so the resulting hash matches and the JS/Solidity answer
+ * agrees for any tokenId.
+ */
+function variantFor(tokenId: bigint): 0 | 1 {
+  const encoded = encodeAbiParameters(
+    [{ type: "uint256" }, { type: "string" }],
+    [tokenId, "nonce-variant"]
+  );
+  const hash = keccak256(encoded);
+  return Number(BigInt(hash) % 2n) as 0 | 1;
 }
 
 // ───────── Handler ─────────
 
-export const revalidate = 60; // ISR hint; we also set explicit Cache-Control
+export const revalidate = 60;
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  // The contract sends `${id}.json`. Strip the suffix.
   const raw = params.id.replace(/\.json$/i, "");
 
   let tokenId: bigint;
@@ -139,52 +182,58 @@ export async function GET(
     );
   }
 
-  // Resolve current DMN balance and pick the tier.
+  // Resolve current NONCE balance and pick the tier + variant.
   const balance = await client.readContract({
-    address: DAEMON_ADDRESS,
-    abi: daemonAbi,
+    address: NONCE_ADDRESS,
+    abi: nonceAbi,
     functionName: "balanceOf",
     args: [owner],
   });
 
   const tier = tierFor(balance);
-  const dmnHeld = Number(balance / 10n ** 18n);
+  const variant = variantFor(tokenId);
+  const variantName = tier.variantNames[variant];
+  const variantPath = tier.variants[variant];
+  const nonceHeld = Number(balance / 10n ** 18n);
+  const origin = new URL(request.url).origin;
 
   const metadata = {
-    name: `Daemon Miner Agent #${tokenId}`,
+    name: `Nonce Miner Agent #${tokenId} — ${variantName}`,
     description:
-      "ERC-8004 aligned identity for a DMN participant. Soulbound; the " +
-      "tier badge reflects live DMN holdings of the agent wallet, so the " +
-      "NFT visually upgrades as you accumulate. Minimum 1 DMN held to " +
-      "claim; transfers are blocked at the contract level.",
-    image: tier.image,
-    // 6-char hex without "#" — OpenSea uses this as the card backdrop.
+      `${variantName.toUpperCase()}. NONCE Miner Agent — soulbound ERC-8004 ` +
+      "identity. The tier badge reflects the holder's live NONCE balance, " +
+      "so the NFT visually upgrades as you accumulate. The variant is " +
+      "fixed at mint time, hashed deterministically from the tokenId. " +
+      "Minimum 1 NONCE held to claim; transfers are blocked at the " +
+      "contract level.",
+    image: `${origin}${variantPath}`,
     background_color: tier.bg,
-    // Per-token external link points at the holder's profile on Basescan
-    // (more useful than a generic site link for someone inspecting the NFT).
     external_url: `https://basescan.org/address/${owner}`,
     attributes: [
       { trait_type: "Tier", value: tier.name },
+      { trait_type: "State", value: variantName },
       {
-        trait_type: "DMN Held",
         display_type: "number",
-        value: dmnHeld,
+        trait_type: "Variant",
+        value: variant + 1,
       },
       {
-        trait_type: "Tier Floor",
         display_type: "number",
-        value: tier.minDmn,
+        trait_type: "NONCE Held",
+        value: nonceHeld,
+      },
+      {
+        display_type: "number",
+        trait_type: "Tier Floor",
+        value: tier.minNonce,
       },
       { trait_type: "Agent Wallet", value: owner },
-      // Pure surface trait so OpenSea filters group by tier color visually.
       { trait_type: "Tier Color", value: tier.color },
     ],
   };
 
   return NextResponse.json(metadata, {
     headers: {
-      // 60s SWR — fresh enough that tier upgrades show up promptly,
-      // long enough not to hammer the RPC if OpenSea re-fetches.
       "Cache-Control":
         "public, s-maxage=60, max-age=60, stale-while-revalidate=300",
     },

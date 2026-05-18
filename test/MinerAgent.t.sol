@@ -2,9 +2,9 @@
 pragma solidity ^0.8.26;
 
 import {Test} from "forge-std/Test.sol";
-import {MinerAgent, IDaemon} from "../src/MinerAgent.sol";
+import {MinerAgent, INonce} from "../src/MinerAgent.sol";
 
-contract MockDaemon is IDaemon {
+contract MockNonce is INonce {
     mapping(address => uint256) public override balanceOf;
     uint256 public override totalMints;
     uint256 public override totalMiningMinted;
@@ -14,19 +14,19 @@ contract MockDaemon is IDaemon {
 
 contract MinerAgentTest is Test {
     MinerAgent internal agent;
-    MockDaemon   internal daemon;
+    MockNonce   internal nonce;
 
     address internal alice  = address(0xAAAA);
     address internal bob    = address(0xBBBB);
     address internal carol  = address(0xCCCC);
 
     function setUp() public {
-        daemon = new MockDaemon();
-        agent = new MinerAgent(IDaemon(address(daemon)));
+        nonce = new MockNonce();
+        agent = new MinerAgent(INonce(address(nonce)));
     }
 
     function test_claim_basicHappyPath() public {
-        daemon.setBalance(alice, 500e18);
+        nonce.setBalance(alice, 500e18);
         vm.prank(alice);
         uint256 tokenId = agent.claim();
 
@@ -36,28 +36,28 @@ contract MinerAgentTest is Test {
         assertEq(agent.totalAgents(), 1);
     }
 
-    function test_claim_revertsIfNoDaemon() public {
+    function test_claim_revertsIfNoNonce() public {
         vm.prank(alice);
         vm.expectRevert(MinerAgent.NotEligible.selector);
         agent.claim();
     }
 
     function test_claim_revertsOnDustBalance() public {
-        // 1 wei = below the 1 DMN floor; should be rejected even though
+        // 1 wei = below the 1 NONCE floor; should be rejected even though
         // the legacy "balanceOf > 0" check would have let it through.
-        daemon.setBalance(alice, 1);
+        nonce.setBalance(alice, 1);
         vm.prank(alice);
         vm.expectRevert(MinerAgent.NotEligible.selector);
         agent.claim();
 
-        // 0.999... DMN: one wei short of the floor.
-        daemon.setBalance(alice, 1e18 - 1);
+        // 0.999... NONCE: one wei short of the floor.
+        nonce.setBalance(alice, 1e18 - 1);
         vm.prank(alice);
         vm.expectRevert(MinerAgent.NotEligible.selector);
         agent.claim();
 
-        // Exactly 1 DMN: passes.
-        daemon.setBalance(alice, 1e18);
+        // Exactly 1 NONCE: passes.
+        nonce.setBalance(alice, 1e18);
         vm.prank(alice);
         uint256 tokenId = agent.claim();
         assertEq(tokenId, 1);
@@ -69,7 +69,7 @@ contract MinerAgentTest is Test {
     }
 
     function test_claim_revertsOnDoubleClaim() public {
-        daemon.setBalance(alice, 1_000e18);
+        nonce.setBalance(alice, 1_000e18);
         vm.prank(alice);
         agent.claim();
         vm.prank(alice);
@@ -78,9 +78,9 @@ contract MinerAgentTest is Test {
     }
 
     function test_claim_multipleHoldersIncrementalIds() public {
-        daemon.setBalance(alice, 100e18);
-        daemon.setBalance(bob,   100e18);
-        daemon.setBalance(carol, 100e18);
+        nonce.setBalance(alice, 100e18);
+        nonce.setBalance(bob,   100e18);
+        nonce.setBalance(carol, 100e18);
 
         vm.prank(alice); uint256 a = agent.claim();
         vm.prank(bob);   uint256 b = agent.claim();
@@ -91,7 +91,7 @@ contract MinerAgentTest is Test {
     }
 
     function test_soulbound_transferReverts() public {
-        daemon.setBalance(alice, 100e18);
+        nonce.setBalance(alice, 100e18);
         vm.prank(alice);
         uint256 id = agent.claim();
 
@@ -101,7 +101,7 @@ contract MinerAgentTest is Test {
     }
 
     function test_soulbound_safeTransferReverts() public {
-        daemon.setBalance(alice, 100e18);
+        nonce.setBalance(alice, 100e18);
         vm.prank(alice);
         uint256 id = agent.claim();
 
@@ -111,7 +111,7 @@ contract MinerAgentTest is Test {
     }
 
     function test_tokenURI_returnsDataUri() public {
-        daemon.setBalance(alice, 12_345e18);
+        nonce.setBalance(alice, 12_345e18);
         vm.prank(alice);
         uint256 id = agent.claim();
         string memory uri = agent.tokenURI(id);
@@ -131,10 +131,10 @@ contract MinerAgentTest is Test {
     }
 
     function test_tier_thresholds() public {
-        // Tier boundaries: Initiate < 1_000 ≤ Bronze < 10_000 ≤ Silver < 100_000 ≤ Gold
-        daemon.setBalance(alice, 999e18);       // Initiate (one wei short of Bronze)
-        daemon.setBalance(bob,   1_000e18);     // Bronze   (exactly at threshold)
-        daemon.setBalance(carol, 10_000e18);    // Silver   (exactly at threshold)
+        // Tier boundaries: Initiate < 1k ≤ Bronze < 10k ≤ Silver < 100k ≤ Gold < 1M ≤ Platinum
+        nonce.setBalance(alice, 999e18);            // Initiate (one wei short of Bronze)
+        nonce.setBalance(bob,   1_000e18);          // Bronze   (exactly at threshold)
+        nonce.setBalance(carol, 10_000e18);         // Silver   (exactly at threshold)
 
         vm.prank(alice); agent.claim();
         vm.prank(bob);   agent.claim();
@@ -151,9 +151,30 @@ contract MinerAgentTest is Test {
         // Deep tier check would require base64 decoding; trust the unit logic.
     }
 
+    function test_variantOf_isDeterministic_andBinary() public view {
+        // Variant must be 0 or 1, and identical reads always agree.
+        for (uint256 id = 1; id <= 50; id++) {
+            uint8 v1 = agent.variantOf(id);
+            uint8 v2 = agent.variantOf(id);
+            assertEq(v1, v2);
+            assertTrue(v1 == 0 || v1 == 1);
+        }
+    }
+
+    function test_variantOf_distributesEvenly_overLargeRange() public view {
+        // Sanity: across 1000 tokenIds, roughly half should be variant 0 and
+        // half variant 1. Allow ±15% slack so the test isn't flaky.
+        uint256 zeros = 0;
+        for (uint256 id = 1; id <= 1000; id++) {
+            if (agent.variantOf(id) == 0) zeros++;
+        }
+        assertGt(zeros, 350);
+        assertLt(zeros, 650);
+    }
+
     function test_name_and_symbol() public view {
-        assertEq(agent.name(), "Daemon Miner Agent");
-        assertEq(agent.symbol(), "DMA");
+        assertEq(agent.name(), "Nonce Miner Agent");
+        assertEq(agent.symbol(), "NMA");
     }
 
     // ───────── URI swap mechanism ─────────
@@ -175,7 +196,7 @@ contract MinerAgentTest is Test {
     }
 
     function test_setExternalBaseURI_changesTokenURI() public {
-        daemon.setBalance(alice, 100e18);
+        nonce.setBalance(alice, 100e18);
         vm.prank(alice);
         agent.claim();
 
@@ -186,7 +207,7 @@ contract MinerAgentTest is Test {
     }
 
     function test_setExternalBaseURI_emptyResetsToOnChain() public {
-        daemon.setBalance(alice, 100e18);
+        nonce.setBalance(alice, 100e18);
         vm.prank(alice);
         agent.claim();
 

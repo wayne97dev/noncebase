@@ -2,11 +2,11 @@
 pragma solidity ^0.8.26;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {Daemon} from "../src/Daemon.sol";
+import {Nonce} from "../src/Nonce.sol";
 
 /// @notice End-to-end fork tests against mainnet V4. Requires MAINNET_RPC env.
-///         Run with:  forge test --match-contract DaemonFork -vv
-contract DaemonForkTest is Test {
+///         Run with:  forge test --match-contract NonceFork -vv
+contract NonceForkTest is Test {
     address constant POOL_MANAGER     = 0x000000000004444c5dc75cB358380D2e3dE08A90;
     address constant POSITION_MANAGER = 0xbD216513d74C8cf14cf4747E6AaA6420FF64ee9e;
     address constant PERMIT2          = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
@@ -20,13 +20,13 @@ contract DaemonForkTest is Test {
     uint256 constant SLOT_GENESIS_COMPLETE   = 8;
     uint256 constant SLOT_CURRENT_DIFFICULTY = 11;
 
-    Daemon internal daemon;
+    Nonce internal nonce;
 
     function setUp() public {
         vm.createSelectFork(vm.envString("MAINNET_RPC"));
 
         bytes memory initCode = abi.encodePacked(
-            type(Daemon).creationCode,
+            type(Nonce).creationCode,
             abi.encode(POOL_MANAGER, POSITION_MANAGER, PERMIT2)
         );
         bytes32 initCodeHash = keccak256(initCode);
@@ -40,9 +40,9 @@ contract DaemonForkTest is Test {
         require(ok, "create2 deploy failed");
         require(predicted.code.length > 0, "no code at predicted");
 
-        daemon = Daemon(payable(predicted));
+        nonce = Nonce(payable(predicted));
         require(uint160(predicted) & HOOK_MASK == HOOK_FLAGS, "bad hook bits");
-        require(daemon.controller() == address(this), "controller mismatch");
+        require(nonce.controller() == address(this), "controller mismatch");
     }
 
     /// Verifies seedPool against real V4: we shortcut the 210-tx genesis fill
@@ -50,42 +50,42 @@ contract DaemonForkTest is Test {
     /// LP minting, and Permit2 approvals.
     function test_seedPool_completes() public {
         uint256 eth = 10.5 ether;
-        vm.store(address(daemon), bytes32(SLOT_GENESIS_MINTED), bytes32(daemon.GENESIS_CAP()));
-        vm.store(address(daemon), bytes32(SLOT_GENESIS_ETH_RAISED), bytes32(eth));
-        vm.deal(address(daemon), eth);
+        vm.store(address(nonce), bytes32(SLOT_GENESIS_MINTED), bytes32(nonce.GENESIS_CAP()));
+        vm.store(address(nonce), bytes32(SLOT_GENESIS_ETH_RAISED), bytes32(eth));
+        vm.deal(address(nonce), eth);
 
-        daemon.seedPool();
+        nonce.seedPool();
 
-        assertTrue(daemon.genesisComplete(), "genesis not complete");
-        assertGt(daemon.currentDifficulty(), 0, "difficulty not set");
+        assertTrue(nonce.genesisComplete(), "genesis not complete");
+        assertGt(nonce.currentDifficulty(), 0, "difficulty not set");
         // V4 liquidity math can leave a few wei of dust above MINING_SUPPLY;
         // tolerate up to 10k wei (extremely tight relative to 18.9M * 1e18).
         assertApproxEqAbs(
-            daemon.balanceOf(address(daemon)),
-            daemon.MINING_SUPPLY(),
+            nonce.balanceOf(address(nonce)),
+            nonce.MINING_SUPPLY(),
             10_000,
             "mining supply not held by contract"
         );
-        assertGe(daemon.balanceOf(address(daemon)), daemon.MINING_SUPPLY(), "below mining supply");
+        assertGe(nonce.balanceOf(address(nonce)), nonce.MINING_SUPPLY(), "below mining supply");
     }
 
     /// After seedPool, mine() should be callable. We slam difficulty to max
     /// so any nonce satisfies the proof, then verify a successful mint.
     function test_mine_afterSeed() public {
         uint256 eth = 10.5 ether;
-        vm.store(address(daemon), bytes32(SLOT_GENESIS_MINTED), bytes32(daemon.GENESIS_CAP()));
-        vm.store(address(daemon), bytes32(SLOT_GENESIS_ETH_RAISED), bytes32(eth));
-        vm.deal(address(daemon), eth);
-        daemon.seedPool();
+        vm.store(address(nonce), bytes32(SLOT_GENESIS_MINTED), bytes32(nonce.GENESIS_CAP()));
+        vm.store(address(nonce), bytes32(SLOT_GENESIS_ETH_RAISED), bytes32(eth));
+        vm.deal(address(nonce), eth);
+        nonce.seedPool();
 
-        vm.store(address(daemon), bytes32(SLOT_CURRENT_DIFFICULTY), bytes32(type(uint256).max));
+        vm.store(address(nonce), bytes32(SLOT_CURRENT_DIFFICULTY), bytes32(type(uint256).max));
 
         address miner = address(0xBEEF);
         vm.prank(miner);
-        daemon.mine(1);
+        nonce.mine(1);
 
-        assertEq(daemon.balanceOf(miner), daemon.BASE_REWARD(), "miner did not receive reward");
-        assertEq(daemon.totalMints(), 1);
+        assertEq(nonce.balanceOf(miner), nonce.BASE_REWARD(), "miner did not receive reward");
+        assertEq(nonce.totalMints(), 1);
     }
 
     /// partialSeed path: only controller can call, must wait 30 min, requires
@@ -94,15 +94,15 @@ contract DaemonForkTest is Test {
         address buyer = address(0xABCD);
         vm.deal(buyer, 1 ether);
         vm.prank(buyer);
-        daemon.mintGenesis{value: 0.05 ether}(5);
+        nonce.mintGenesis{value: 0.05 ether}(5);
 
-        assertEq(daemon.genesisMinted(), 5_000e18);
+        assertEq(nonce.genesisMinted(), 5_000e18);
 
         vm.warp(block.timestamp + 30 minutes + 1);
-        daemon.partialSeed();
+        nonce.partialSeed();
 
-        assertTrue(daemon.genesisComplete());
-        assertGt(daemon.currentDifficulty(), 0);
+        assertTrue(nonce.genesisComplete());
+        assertGt(nonce.currentDifficulty(), 0);
     }
 
     /// partialSeed must revert before the 30 minute delay.
@@ -110,10 +110,10 @@ contract DaemonForkTest is Test {
         address buyer = address(0xABCD);
         vm.deal(buyer, 1 ether);
         vm.prank(buyer);
-        daemon.mintGenesis{value: 0.05 ether}(5);
+        nonce.mintGenesis{value: 0.05 ether}(5);
 
-        vm.expectRevert(Daemon.TooSoon.selector);
-        daemon.partialSeed();
+        vm.expectRevert(Nonce.TooSoon.selector);
+        nonce.partialSeed();
     }
 
     /// partialSeed must revert if called by anyone other than the controller.
@@ -121,12 +121,12 @@ contract DaemonForkTest is Test {
         address buyer = address(0xABCD);
         vm.deal(buyer, 1 ether);
         vm.prank(buyer);
-        daemon.mintGenesis{value: 0.05 ether}(5);
+        nonce.mintGenesis{value: 0.05 ether}(5);
 
         vm.warp(block.timestamp + 30 minutes + 1);
         vm.prank(buyer);
-        vm.expectRevert(Daemon.NotController.selector);
-        daemon.partialSeed();
+        vm.expectRevert(Nonce.NotController.selector);
+        nonce.partialSeed();
     }
 
     function _mineSalt(bytes32 initCodeHash) internal pure returns (bytes32, address) {

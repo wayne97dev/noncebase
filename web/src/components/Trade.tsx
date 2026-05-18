@@ -17,8 +17,8 @@ import {
   type Hex,
   type Address,
 } from "viem";
-import { daemonAbi } from "@/lib/daemonAbi";
-import { DAEMON_ADDRESS } from "@/lib/contract";
+import { nonceAbi } from "@/lib/nonceAbi";
+import { NONCE_ADDRESS } from "@/lib/contract";
 
 const UNIVERSAL_ROUTER: Record<number, Address> = {
   1: "0x4C82D1fBFe28C977cBB58D8C7FF8FCF9F70a2cCA",
@@ -95,8 +95,8 @@ export function Trade() {
   }, [mode, amountStr]);
 
   const { data: genesis } = useReadContract({
-    address: DAEMON_ADDRESS,
-    abi: daemonAbi,
+    address: NONCE_ADDRESS,
+    abi: nonceAbi,
     functionName: "genesisState",
     query: { refetchInterval: 12_000 },
   });
@@ -106,22 +106,22 @@ export function Trade() {
   const allow = useReadContracts({
     contracts: address && router
       ? [
-          { address: DAEMON_ADDRESS, abi: daemonAbi, functionName: "allowance", args: [address, PERMIT2] },
-          { address: PERMIT2, abi: permit2Abi, functionName: "allowance", args: [address, DAEMON_ADDRESS, router] },
+          { address: NONCE_ADDRESS, abi: nonceAbi, functionName: "allowance", args: [address, PERMIT2] },
+          { address: PERMIT2, abi: permit2Abi, functionName: "allowance", args: [address, NONCE_ADDRESS, router] },
         ]
       : [],
     query: { enabled: !!address && !!router && mode === "sell", refetchInterval: 12_000 },
   });
 
-  const daemonToPermit2 = allow.data?.[0]?.result as bigint | undefined;
+  const nonceToPermit2 = allow.data?.[0]?.result as bigint | undefined;
   const permit2ToRouter = (allow.data?.[1]?.result as readonly [bigint, number, number] | undefined)?.[0];
 
   const poolKey = useMemo(() => ({
     currency0: "0x0000000000000000000000000000000000000000" as Address,
-    currency1: DAEMON_ADDRESS,
+    currency1: NONCE_ADDRESS,
     fee: 0,
     tickSpacing: 200,
-    hooks: DAEMON_ADDRESS,
+    hooks: NONCE_ADDRESS,
   }), []);
 
   const { writeContract, data: txHash, isPending, error } = useWriteContract();
@@ -177,7 +177,7 @@ export function Trade() {
   function buy() {
     if (!router) return;
     if (parsedAmount === 0n) return;
-    const input = buildV4SwapInput(true, parsedAmount, "0x0000000000000000000000000000000000000000", DAEMON_ADDRESS);
+    const input = buildV4SwapInput(true, parsedAmount, "0x0000000000000000000000000000000000000000", NONCE_ADDRESS);
     writeContract({
       address: router,
       abi: universalRouterAbi,
@@ -190,7 +190,7 @@ export function Trade() {
   function sell() {
     if (!router) return;
     if (parsedAmount === 0n) return;
-    const input = buildV4SwapInput(false, parsedAmount, DAEMON_ADDRESS, "0x0000000000000000000000000000000000000000");
+    const input = buildV4SwapInput(false, parsedAmount, NONCE_ADDRESS, "0x0000000000000000000000000000000000000000");
     writeContract({
       address: router,
       abi: universalRouterAbi,
@@ -199,10 +199,10 @@ export function Trade() {
     });
   }
 
-  function approveDaemonToPermit2() {
+  function approveNonceToPermit2() {
     writeContract({
-      address: DAEMON_ADDRESS,
-      abi: daemonAbi,
+      address: NONCE_ADDRESS,
+      abi: nonceAbi,
       functionName: "approve",
       args: [PERMIT2, 2n ** 256n - 1n],
     });
@@ -214,7 +214,7 @@ export function Trade() {
       address: PERMIT2,
       abi: permit2Abi,
       functionName: "approve",
-      args: [DAEMON_ADDRESS, router, 2n ** 160n - 1n, 2 ** 48 - 1],
+      args: [NONCE_ADDRESS, router, 2n ** 160n - 1n, 2 ** 48 - 1],
     });
   }
 
@@ -294,7 +294,7 @@ export function Trade() {
                       ? "swapping…"
                       : isSuccess
                         ? "swapped ✓"
-                        : "buy DMN"}
+                        : "buy NONCE"}
             </button>
           )}
 
@@ -304,10 +304,10 @@ export function Trade() {
               isPending={isPending}
               isConfirming={isConfirming}
               isSuccess={isSuccess}
-              daemonToPermit2={daemonToPermit2}
+              nonceToPermit2={nonceToPermit2}
               permit2ToRouter={permit2ToRouter}
               amount={parsedAmount}
-              onApproveDaemon={approveDaemonToPermit2}
+              onApproveNonce={approveNonceToPermit2}
               onApprovePermit2={approvePermit2ToRouter}
               onSell={sell}
             />
@@ -329,17 +329,17 @@ function SellButtons(props: {
   isPending: boolean;
   isConfirming: boolean;
   isSuccess: boolean;
-  daemonToPermit2: bigint | undefined;
+  nonceToPermit2: bigint | undefined;
   permit2ToRouter: bigint | undefined;
   amount: bigint;
-  onApproveDaemon: () => void;
+  onApproveNonce: () => void;
   onApprovePermit2: () => void;
   onSell: () => void;
 }) {
   const {
     isConnected, isPending, isConfirming, isSuccess,
-    daemonToPermit2, permit2ToRouter, amount,
-    onApproveDaemon, onApprovePermit2, onSell,
+    nonceToPermit2, permit2ToRouter, amount,
+    onApproveNonce, onApprovePermit2, onSell,
   } = props;
 
   if (!isConnected) {
@@ -350,18 +350,18 @@ function SellButtons(props: {
     return <button disabled className="btn btn-primary w-full">enter an amount</button>;
   }
 
-  const needsDaemonApprove = (daemonToPermit2 ?? 0n) < amount;
+  const needsNonceApprove = (nonceToPermit2 ?? 0n) < amount;
   const needsPermit2Approve = (permit2ToRouter ?? 0n) < amount;
   const busyLabel = isPending ? "confirm in wallet…" : isConfirming ? "confirming…" : null;
 
-  if (needsDaemonApprove) {
+  if (needsNonceApprove) {
     return (
       <button
-        onClick={onApproveDaemon}
+        onClick={onApproveNonce}
         disabled={isPending || isConfirming}
         className="btn btn-primary w-full"
       >
-        {busyLabel ?? "step 1 of 3: approve DMN to Permit2"}
+        {busyLabel ?? "step 1 of 3: approve NONCE to Permit2"}
       </button>
     );
   }
@@ -384,7 +384,7 @@ function SellButtons(props: {
       disabled={isPending || isConfirming}
       className="btn btn-primary w-full"
     >
-      {busyLabel ?? (isSuccess ? "sold ✓" : "sell DMN")}
+      {busyLabel ?? (isSuccess ? "sold ✓" : "sell NONCE")}
     </button>
   );
 }

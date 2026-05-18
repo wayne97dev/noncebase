@@ -19,7 +19,7 @@ const DEFAULT_BASE_RPC         = "https://base-rpc.publicnode.com";
 const DEFAULT_BASE_SEPOLIA_RPC = "https://base-sepolia-rpc.publicnode.com";
 
 export const config = getDefaultConfig({
-  appName: "Daemon",
+  appName: "Nonce",
   projectId,
   // Base first so RainbowKit defaults to it.
   chains: [base, baseSepolia],

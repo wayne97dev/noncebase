@@ -8,8 +8,8 @@ import {
   useWaitForTransactionReceipt,
 } from "wagmi";
 import { hexToBytes, type Hex } from "viem";
-import { daemonAbi } from "@/lib/daemonAbi";
-import { DAEMON_ADDRESS } from "@/lib/contract";
+import { nonceAbi } from "@/lib/nonceAbi";
+import { NONCE_ADDRESS } from "@/lib/contract";
 
 type WorkerMsg =
   | { type: "progress"; workerId: number; hashes: bigint; elapsedMs: number; currentNonce: bigint }
@@ -33,23 +33,23 @@ export function useMiner() {
   const { address } = useAccount();
 
   const { data: challenge, refetch: refetchChallenge } = useReadContract({
-    address: DAEMON_ADDRESS,
-    abi: daemonAbi,
+    address: NONCE_ADDRESS,
+    abi: nonceAbi,
     functionName: "getChallenge",
     args: address ? [address] : undefined,
     query: { enabled: !!address, refetchInterval: 12_000 },
   });
 
   const { data: difficulty } = useReadContract({
-    address: DAEMON_ADDRESS,
-    abi: daemonAbi,
+    address: NONCE_ADDRESS,
+    abi: nonceAbi,
     functionName: "currentDifficulty",
     query: { refetchInterval: 24_000 },
   });
 
   const { data: miningState } = useReadContract({
-    address: DAEMON_ADDRESS,
-    abi: daemonAbi,
+    address: NONCE_ADDRESS,
+    abi: nonceAbi,
     functionName: "miningState",
     query: { refetchInterval: 12_000 },
   });
@@ -120,8 +120,8 @@ export function useMiner() {
       try {
         setStatus("submitting");
         const hash = await writeContractAsync({
-          address: DAEMON_ADDRESS,
-          abi: daemonAbi,
+          address: NONCE_ADDRESS,
+          abi: nonceAbi,
           functionName: "mine",
           args: [nonce],
         });

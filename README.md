@@ -1,4 +1,4 @@
-# DMN — Base
+# NONCE — Base
 
 Mined ERC-20 with a self-hook — the token contract IS its own Uniswap V4
 hook. One address, one bytecode: the token, the hook, and the PoW miner
@@ -12,16 +12,16 @@ Logic forked 1:1 from `hash256.org` (MIT). Branding and frontend are new.
 
 ## Architecture
 
-- **Token** — ERC-20 named `Daemon` / `DMN`, 21M cap, 18 decimals.
-- **Genesis sale** — 1.05M DMN (5%) sold at `0.01 ETH` per `1,000 DMN`,
+- **Token** — ERC-20 named `Nonce` / `NONCE`, 21M cap, 18 decimals.
+- **Genesis sale** — 1.05M NONCE (5%) sold at `0.01 ETH` per `1,000 NONCE`,
   max 5 units per tx. ETH raised goes into the Uniswap V4 pool.
 - **Pool seeding** — once genesis is sold out (or 30 min after deploy via
-  `partialSeed`), 1.05M DMN + raised ETH form the V4 LP; the controller
+  `partialSeed`), 1.05M NONCE + raised ETH form the V4 LP; the controller
   receives the LP position.
-- **Mining** — 18.9M DMN (90%) released via PoW.
+- **Mining** — 18.9M NONCE (90%) released via PoW.
   - Challenge: `keccak256(keccak256(chainId, contract, miner, epoch), nonce) < currentDifficulty`
   - Epoch: every 100 blocks
-  - Reward: `100 DMN >> era`, era = `totalMints / 100_000`
+  - Reward: `100 NONCE >> era`, era = `totalMints / 100_000`
   - Retarget: every 2016 mints, clamped ±4×
   - Cap: 10 mints/block
   - Replay protection: per-(miner, nonce, epoch)
@@ -35,7 +35,7 @@ Logic forked 1:1 from `hash256.org` (MIT). Branding and frontend are new.
 > 3.3-minute epoch and a target of 1 mint per 10 seconds, ~6× faster than
 > the original tokenomics. If you want to keep the mainnet wall-clock
 > cadence (20-min epoch, 1 mint/min), bump `EPOCH_BLOCKS` to 600 and
-> `TARGET_BLOCKS_PER_MINT` to 30 in `src/Daemon.sol` before deploying.
+> `TARGET_BLOCKS_PER_MINT` to 30 in `src/Nonce.sol` before deploying.
 
 ## Setup
 
@@ -78,11 +78,11 @@ The script:
 
 Pick **one** of these signing methods:
 
-**Foundry encrypted keystore** (`cast wallet import daemon-base --interactive`):
+**Foundry encrypted keystore** (`cast wallet import nonce-base --interactive`):
 ```bash
 forge script script/Deploy.s.sol \
   --rpc-url $BASE_RPC \
-  --account daemon-base \
+  --account nonce-base \
   --broadcast \
   --verify \
   --verifier-url 'https://api.basescan.org/v2/api?chainid=8453' \
@@ -139,10 +139,10 @@ call, `mine()` becomes callable.
 ### 7. Deploy MinerAgent (optional but recommended)
 
 ```bash
-DAEMON_ADDRESS=0xYourDaemon \
+NONCE_ADDRESS=0xYourNonce \
 forge script script/DeployMinerAgent.s.sol \
   --rpc-url $BASE_RPC \
-  --account daemon-base \
+  --account nonce-base \
   --broadcast \
   --verify \
   --verifier-url 'https://api.basescan.org/v2/api?chainid=8453' \
@@ -157,7 +157,7 @@ BASE_URI="https://YOUR_DOMAIN/api/agent/" \
 CONTRACT_URI="https://YOUR_DOMAIN/api/collection" \
 forge script script/SetMinerAgentURI.s.sol \
   --rpc-url $BASE_RPC \
-  --account daemon-base \
+  --account nonce-base \
   --broadcast
 ```
 
@@ -167,7 +167,7 @@ forge script script/SetMinerAgentURI.s.sol \
 AGENT_URI="https://YOUR_DOMAIN/agent.json" \
 IDENTITY_REGISTRY=0x...                    \
 forge script script/RegisterAgent.s.sol  \
-  --rpc-url $BASE_RPC --account daemon-base --broadcast
+  --rpc-url $BASE_RPC --account nonce-base --broadcast
 ```
 
 The ERC-8004 IdentityRegistry on Base must be supplied via the

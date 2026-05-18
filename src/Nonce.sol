@@ -36,7 +36,7 @@ interface IAllowanceTransfer {
     function approve(address token, address spender, uint160 amount, uint48 expiration) external;
 }
 
-contract Daemon is ERC20, IHooks, ReentrancyGuard {
+contract Nonce is ERC20, IHooks, ReentrancyGuard {
     using PoolIdLibrary for PoolKey;
     using CurrencyLibrary for Currency;
     using BalanceDeltaLibrary for BalanceDelta;
@@ -66,7 +66,7 @@ contract Daemon is ERC20, IHooks, ReentrancyGuard {
     uint256 public constant PARTIAL_SEED_DELAY = 30 minutes;
 
     /// @notice Window after deploy after which any genesis buyer can call
-    ///         `refundGenesis` to redeem their DMN for the ETH they paid,
+    ///         `refundGenesis` to redeem their NONCE for the ETH they paid,
     ///         provided the pool has not yet been seeded. Acts as a safety
     ///         net if `seedPool` / `partialSeed` cannot complete.
     uint256 public constant REFUND_GRACE = 3 days;
@@ -131,7 +131,7 @@ contract Daemon is ERC20, IHooks, ReentrancyGuard {
         IPoolManager poolManager_,
         address      positionManager_,
         address      permit2_
-    ) ERC20("Daemon", "DMN") {
+    ) ERC20("Nonce", "NONCE") {
         require(address(poolManager_) != address(0));
         require(positionManager_      != address(0));
         require(permit2_              != address(0));
@@ -165,9 +165,9 @@ contract Daemon is ERC20, IHooks, ReentrancyGuard {
     }
 
     /// @notice Genesis buyer escape hatch. After `REFUND_GRACE` from deploy,
-    ///         if the pool has not been seeded yet, holders of genesis DMN
+    ///         if the pool has not been seeded yet, holders of genesis NONCE
     ///         can burn their balance back to the contract and recover the
-    ///         ETH at the original 0.01 ETH / 1,000 DMN price. Useful when
+    ///         ETH at the original 0.01 ETH / 1,000 NONCE price. Useful when
     ///         seeding is technically blocked and would otherwise lock
     ///         buyer ETH on the contract forever.
     function refundGenesis(uint256 tokenAmount) external nonReentrant {

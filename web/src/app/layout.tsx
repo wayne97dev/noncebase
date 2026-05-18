@@ -15,22 +15,22 @@ const mono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://CUSTOM_DOMAIN_TBD"),
-  title: "Daemon — mined ERC-20 agent",
+  title: "Nonce — mined ERC-20 agent",
   description:
-    "Daemon ($DMN) is a mined ERC-20 with a self-hook and an ERC-8004 agent identity. The token, the V4 hook, and the PoW miner are the same contract.",
+    "Nonce ($NONCE) is a mined ERC-20 with a self-hook and an ERC-8004 agent identity. The token, the V4 hook, and the PoW miner are the same contract.",
   icons: { icon: "/favicon.png" },
   openGraph: {
-    title: "Daemon — mined ERC-20 agent",
+    title: "Nonce — mined ERC-20 agent",
     description:
       "Mined ERC-20 with a self-hook. ERC-8004 agent identity. Soulbound Miner Agent NFTs. No owner, no mint key, no proxy.",
     url: "https://CUSTOM_DOMAIN_TBD",
-    siteName: "Daemon",
-    images: [{ url: "/logo.png", width: 1024, height: 1024, alt: "Daemon sigil" }],
+    siteName: "Nonce",
+    images: [{ url: "/logo.png", width: 1024, height: 1024, alt: "Nonce sigil" }],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Daemon — mined ERC-20 agent",
+    title: "Nonce — mined ERC-20 agent",
     description:
       "Mined ERC-20 with a self-hook. ERC-8004 agent identity. Soulbound Miner Agent NFTs.",
     images: ["/logo.png"],

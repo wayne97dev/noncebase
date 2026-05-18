@@ -1,4 +1,4 @@
-export const daemonAbi = [
+export const nonceAbi = [
   {
     "type": "constructor",
     "inputs": [

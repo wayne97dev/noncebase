@@ -23,7 +23,7 @@ export function NetworkBanner() {
       }}
     >
       <span>
-        Wrong network. DMN lives on {EXPECTED_CHAIN.name} (chainId{" "}
+        Wrong network. NONCE lives on {EXPECTED_CHAIN.name} (chainId{" "}
         {EXPECTED_CHAIN.id}). Your wallet is on chainId {chainId}.
       </span>
       <button

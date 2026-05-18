@@ -22,10 +22,10 @@ interface IMinerAgent {
 ///
 ///         Example:
 ///           MINER_AGENT_ADDRESS=0x... \
-///           BASE_URI="https://daemon.com/api/agent/" \
-///           CONTRACT_URI="https://daemon.com/nft/collection.json" \
+///           BASE_URI="https://nonce.com/api/agent/" \
+///           CONTRACT_URI="https://nonce.com/nft/collection.json" \
 ///           forge script script/SetMinerAgentURI.s.sol \
-///             --rpc-url $MAINNET_RPC --account daemon-mainnet --broadcast
+///             --rpc-url $MAINNET_RPC --account nonce-mainnet --broadcast
 ///
 ///         CONTRACT_URI is optional — leave it unset to keep the on-chain
 ///         default contractURI() SVG card.

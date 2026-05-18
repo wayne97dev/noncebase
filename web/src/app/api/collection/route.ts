@@ -1,9 +1,9 @@
 // OpenSea collection-level metadata endpoint, exposed at
 //
-//   https://daemonerc8004.com/api/collection
+//   https://CUSTOM_DOMAIN_TBD/api/collection
 //
 // After the production MinerAgent deploys we call
-//   MinerAgent.setExternalContractURI("https://daemonerc8004.com/api/collection")
+//   MinerAgent.setExternalContractURI("https://CUSTOM_DOMAIN_TBD/api/collection")
 // so OpenSea / collection aggregators pull the rich card from here instead
 // of falling back to the on-chain SVG default in MinerAgent._defaultContractURI.
 //
@@ -24,19 +24,19 @@ export async function GET() {
   // OpenSea collection metadata standard:
   // https://docs.opensea.io/docs/contract-level-metadata
   const metadata = {
-    name: "Daemon Miner Agent",
+    name: "Nonce Miner Agent",
     description:
-      "Soulbound ERC-8004 identity NFTs for $DMN participants. One per " +
-      "address, claimable once a wallet holds at least 1 DMN. The tier " +
+      "Soulbound ERC-8004 identity NFTs for $NONCE participants. One per " +
+      "address, claimable once a wallet holds at least 1 NONCE. The tier " +
       "badge — Initiate, Bronze, Silver, Gold — is computed live from " +
-      "the holder's current DMN balance, so the NFT visibly upgrades as " +
+      "the holder's current NONCE balance, so the NFT visibly upgrades as " +
       "you accumulate. Tokens are non-transferable: a transfer attempt " +
       "reverts at the contract level. Royalties are 0% by design — these " +
       "are identity, not assets.",
     image: IPFS_COLLECTION,
     banner_image: IPFS_COLLECTION,
     featured_image: IPFS_GOLD,
-    external_link: "https://daemonerc8004.com",
+    external_link: "https://CUSTOM_DOMAIN_TBD",
     collaborators: [],
     // Royalty config — soulbound collection, no secondary trade signal.
     // Some marketplaces still expect these fields to be present.

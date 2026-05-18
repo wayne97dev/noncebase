@@ -7,8 +7,8 @@ import {
   useWaitForTransactionReceipt,
 } from "wagmi";
 import Image from "next/image";
-import { DAEMON_ADDRESS, DAEMON_SYMBOL, MINER_AGENT_ADDRESS } from "@/lib/contract";
-import { daemonAbi } from "@/lib/daemonAbi";
+import { NONCE_ADDRESS, NONCE_SYMBOL, MINER_AGENT_ADDRESS } from "@/lib/contract";
+import { nonceAbi } from "@/lib/nonceAbi";
 import { minerAgentAbi } from "@/lib/minerAgentAbi";
 import { formatUnits } from "viem";
 
@@ -28,40 +28,58 @@ import { formatUnits } from "viem";
 
 const CLAIM_LIVE = false;
 
+// 5 tiers × 2 variants each = 10 NFT artworks. Variant per token is
+// picked deterministically from the tokenId hash (see MinerAgent.variantOf
+// and /api/agent/[id]/route.ts). In the preview gallery below we show the
+// FIRST variant per tier — the holder may receive either variant after
+// claim, depending on which tokenId they get assigned.
 const TIERS = [
   {
     key: "initiate",
     name: "Initiate",
-    image: "/nft/initiate.png",
+    images: ["/nft/NONCE_1.png", "/nft/NONCE_2.png"] as const,
+    states: ["Genesis Signal", "Pending State"] as const,
     threshold: "< 1,000",
     minWei: 0n,
   },
   {
     key: "bronze",
     name: "Bronze",
-    image: "/nft/bronze.png",
+    images: ["/nft/NONCE_3.png", "/nft/NONCE_4.png"] as const,
+    states: ["Ordered Execution", "Verified State"] as const,
     threshold: "1k – 9.9k",
     minWei: 1_000n * 10n ** 18n,
   },
   {
     key: "silver",
     name: "Silver",
-    image: "/nft/silver.png",
+    images: ["/nft/NONCE_5.png", "/nft/NONCE_6.png"] as const,
+    states: ["Replay Barrier", "Finalized State"] as const,
     threshold: "10k – 99.9k",
     minWei: 10_000n * 10n ** 18n,
   },
   {
     key: "gold",
     name: "Gold",
-    image: "/nft/gold.png",
-    threshold: "≥ 100k",
+    images: ["/nft/NONCE_7.png", "/nft/NONCE_8.png"] as const,
+    states: ["Archived State", "Echo State"] as const,
+    threshold: "100k – 999.9k",
     minWei: 100_000n * 10n ** 18n,
+  },
+  {
+    key: "platinum",
+    name: "Platinum",
+    images: ["/nft/NONCE_9.png", "/nft/NONCE_10.png"] as const,
+    states: ["Transition State", "Confirmation State"] as const,
+    threshold: "≥ 1M",
+    minWei: 1_000_000n * 10n ** 18n,
   },
 ] as const;
 
-const MIN_TO_CLAIM = 10n ** 18n; // 1 DMN
+const MIN_TO_CLAIM = 10n ** 18n; // 1 NONCE
 
 function tierIndexFor(balance: bigint): number {
+  if (balance >= TIERS[4].minWei) return 4;
   if (balance >= TIERS[3].minWei) return 3;
   if (balance >= TIERS[2].minWei) return 2;
   if (balance >= TIERS[1].minWei) return 1;
@@ -71,10 +89,10 @@ function tierIndexFor(balance: bigint): number {
 export function MinerAgent() {
   const { address, isConnected } = useAccount();
 
-  // Always read DMN balance to show the tier preview (regardless of CLAIM_LIVE).
+  // Always read NONCE balance to show the tier preview (regardless of CLAIM_LIVE).
   const { data: balance } = useReadContract({
-    address: DAEMON_ADDRESS,
-    abi: daemonAbi,
+    address: NONCE_ADDRESS,
+    abi: nonceAbi,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
     query: { enabled: !!address },
@@ -120,7 +138,7 @@ export function MinerAgent() {
       return {
         label: "claim — live after production deploy",
         disabled: true,
-        hint: "MinerAgent ships on the same tx batch as the production Daemon launch.",
+        hint: "MinerAgent ships on the same tx batch as the production Nonce launch.",
       };
     }
     if (!isConnected) {
@@ -135,7 +153,7 @@ export function MinerAgent() {
     }
     if (!eligible) {
       return {
-        label: `need ≥ 1 ${DAEMON_SYMBOL} to claim`,
+        label: `need ≥ 1 ${NONCE_SYMBOL} to claim`,
         disabled: true,
         hint: "buy in genesis or earn via mining first",
       };
@@ -193,12 +211,14 @@ export function MinerAgent() {
         style={{ color: "var(--fg-muted)" }}
       >
         One badge per address, permanently bound to the wallet that claims it.
-        The artwork is decided dynamically by your live {DAEMON_SYMBOL} holdings — the
-        NFT visibly upgrades as you accumulate. Minimum 1 {DAEMON_SYMBOL} held to
-        claim.
+        10 artworks total — 5 tiers × 2 variants. Your tier scales with live{" "}
+        {NONCE_SYMBOL} holdings (the NFT visibly upgrades as you accumulate);
+        the variant is fixed at mint, hashed deterministically from your
+        tokenId. Each artwork represents a state in a transaction lifecycle.
+        Minimum 1 {NONCE_SYMBOL} held to claim.
       </p>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-5">
         {TIERS.map((t, i) => {
           const isCurrent = i === currentTier;
           return (
@@ -219,12 +239,12 @@ export function MinerAgent() {
                 style={{ aspectRatio: "1 / 1", background: "#000" }}
               >
                 <Image
-                  src={t.image}
-                  alt={`${t.name} tier sigil`}
+                  src={t.images[0]}
+                  alt={`${t.name} tier — ${t.states[0]}`}
                   fill
-                  sizes="(max-width: 640px) 50vw, 25vw"
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
                   style={{ objectFit: "contain" }}
-                  priority={t.key === "initiate" || t.key === "gold"}
+                  priority={i === 0 || i === 4}
                 />
               </div>
               <div className="p-3 flex flex-col gap-1">
@@ -255,7 +275,14 @@ export function MinerAgent() {
                   className="font-mono text-xs"
                   style={{ color: "var(--fg-muted)" }}
                 >
-                  {t.threshold} {DAEMON_SYMBOL}
+                  {t.threshold} {NONCE_SYMBOL}
+                </span>
+                <span
+                  className="font-mono text-[10px]"
+                  style={{ color: "var(--fg-dim)" }}
+                  title={`Variants: ${t.states[0]} · ${t.states[1]}`}
+                >
+                  {t.states[0]} · {t.states[1]}
                 </span>
               </div>
             </div>
@@ -279,7 +306,7 @@ export function MinerAgent() {
                   {Number(formatUnits(userBalance, 18)).toLocaleString("en-US", {
                     maximumFractionDigits: 2,
                   })}{" "}
-                  {DAEMON_SYMBOL}
+                  {NONCE_SYMBOL}
                 </span>
               </div>
               <div>
@@ -291,7 +318,7 @@ export function MinerAgent() {
                 >
                   {eligible
                     ? TIERS[currentTier].name
-                    : `not eligible (need ≥ 1 ${DAEMON_SYMBOL})`}
+                    : `not eligible (need ≥ 1 ${NONCE_SYMBOL})`}
                 </span>
               </div>
             </>

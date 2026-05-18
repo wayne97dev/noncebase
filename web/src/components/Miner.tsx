@@ -1,8 +1,8 @@
 "use client";
 
 import { useAccount, useReadContract } from "wagmi";
-import { daemonAbi } from "@/lib/daemonAbi";
-import { DAEMON_ADDRESS } from "@/lib/contract";
+import { nonceAbi } from "@/lib/nonceAbi";
+import { NONCE_ADDRESS } from "@/lib/contract";
 import { useMiner } from "@/hooks/useMiner";
 
 function formatRate(hps: number): string {
@@ -38,8 +38,8 @@ export function Miner() {
   const { isConnected } = useAccount();
 
   const { data: genesis } = useReadContract({
-    address: DAEMON_ADDRESS,
-    abi: daemonAbi,
+    address: NONCE_ADDRESS,
+    abi: nonceAbi,
     functionName: "genesisState",
     query: { refetchInterval: 12_000 },
   });
