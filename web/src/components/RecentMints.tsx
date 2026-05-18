@@ -42,7 +42,10 @@ type Activity = {
   seenAt: number;
 };
 
-const MAX_VISIBLE = 12;
+// Cap the in-memory feed. The list scrolls inside a fixed-height container
+// (see render), so a larger window here just means more history available
+// to the user without growing the visible panel.
+const MAX_VISIBLE = 30;
 // 10k blocks = ~5.5 hours on Base at 2s/block. Public RPCs (publicnode,
 // alchemy free tier) cap getLogs ranges around 10k blocks per call;
 // anything larger gets rejected as "range too large". For a recent-
@@ -328,7 +331,14 @@ export function RecentMints() {
           {loading ? "loading on-chain activity…" : "no activity yet"}
         </div>
       ) : (
-        <ul className="space-y-1.5 font-mono text-sm">
+        // Fixed-height scrollable region so the activity panel never
+        // grows the page when traffic picks up. Roughly 6 rows visible;
+        // the rest scrolls. Custom scrollbar styling lives in globals.css
+        // under .scroll-thin so the bar matches the dark theme.
+        <ul
+          className="space-y-1.5 font-mono text-sm overflow-y-auto pr-1 scroll-thin"
+          style={{ maxHeight: 240 }}
+        >
           {activity.map((a, i) => {
             const meta = labelFor(a);
             return (

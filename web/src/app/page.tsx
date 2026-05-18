@@ -7,6 +7,7 @@ import { Genesis } from "@/components/Genesis";
 import { Miner } from "@/components/Miner";
 import { Trade } from "@/components/Trade";
 import { MinerAgent } from "@/components/MinerAgent";
+import { NONCE_ADDRESS } from "@/lib/contract";
 
 export default function Page() {
   return (
@@ -55,6 +56,18 @@ export default function Page() {
           <div className="pt-3">
             chain: Base mainnet (chainId 8453)
           </div>
+          <div className="break-all">
+            contract:{" "}
+            <a
+              href={`https://basescan.org/address/${NONCE_ADDRESS}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline"
+              style={{ color: "var(--accent)" }}
+            >
+              {NONCE_ADDRESS}
+            </a>
+          </div>
           <div>
             agent manifest:{" "}
             <a
@@ -65,6 +78,18 @@ export default function Page() {
               style={{ color: "var(--accent)" }}
             >
               /agent.json
+            </a>
+          </div>
+          <div>
+            x:{" "}
+            <a
+              href="https://x.com/Nonceagent8004"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline"
+              style={{ color: "var(--accent)" }}
+            >
+              @Nonceagent8004
             </a>
           </div>
         </footer>
