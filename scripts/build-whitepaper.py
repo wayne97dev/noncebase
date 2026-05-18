@@ -2,8 +2,8 @@
 """Render WHITEPAPER.md into a styled PDF.
 
 Outputs two copies:
-    web/public/whitepaper.pdf   — served from the live site
-    ~/Desktop/PICK-Whitepaper.pdf — convenience local copy
+    web/public/whitepaper.pdf      — served from the live site
+    ~/Desktop/Nonce-Whitepaper.pdf — convenience local copy
 
 Requires `marked` (fetched on-demand via npx) and a Chrome install at the
 standard macOS location for headless print-to-PDF.
@@ -21,8 +21,8 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 MD = ROOT / "WHITEPAPER.md"
 WEB_PUBLIC_PDF = ROOT / "web" / "public" / "whitepaper.pdf"
-DESKTOP_PDF = pathlib.Path.home() / "Desktop" / "PICK-Whitepaper.pdf"
-TMP = pathlib.Path("/tmp/pick-whitepaper")
+DESKTOP_PDF = pathlib.Path.home() / "Desktop" / "Nonce-Whitepaper.pdf"
+TMP = pathlib.Path("/tmp/nonce-whitepaper")
 HTML = TMP / "index.html"
 
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
@@ -81,7 +81,7 @@ def main() -> None:
 
     html = (
         '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
-        '<title>PICK Whitepaper</title>'
+        '<title>Nonce Whitepaper</title>'
         f'<style>{CSS}</style></head><body>{body}</body></html>'
     )
     HTML.write_text(html)

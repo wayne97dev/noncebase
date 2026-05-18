@@ -48,18 +48,18 @@ where
 
 ```
 challenge = keccak256(abi.encode(chainId, contractAddress, miner, epoch))
-epoch     = blockNumber / 100
+epoch     = blockNumber / 600
 ```
 
 Three properties matter here.
 
-The challenge changes every hundred blocks, roughly twenty minutes on mainnet. A miner who fails to find a solution within one epoch cannot carry the work forward. The seed shifts and the search starts over. This caps the cost of difficulty mispricing and gives the network natural retargeting windows.
+The challenge changes every six hundred blocks, roughly twenty minutes on Base. A miner who fails to find a solution within one epoch cannot carry the work forward. The seed shifts and the search starts over. This caps the cost of difficulty mispricing and gives the network natural retargeting windows.
 
 The `miner` field is `msg.sender`. Bob's nonce search is for a different challenge than Alice's. Even if Bob copies Alice's pending transaction from the mempool and rebroadcasts it under his own address, his version computes a different hash and almost certainly fails the difficulty check. Front-running mined solutions is impossible at the cryptographic level, not at the transaction-ordering level.
 
 Replay protection lives in a `usedProofs` mapping keyed on `keccak256(miner, nonce, epoch)`. The same triple cannot be claimed twice. Storage grows by one slot per successful mint.
 
-Difficulty retargets every 2,016 mints, the same cadence as Bitcoin. The new target equals the old target times the ratio of blocks actually elapsed over the expected number of blocks. The expected count is 2,016 mints times 5 blocks per mint, that is, 10,080 blocks. The retarget is clamped to a factor of four in either direction per period.
+Difficulty retargets every 2,016 mints, the same cadence as Bitcoin. The new target equals the old target times the ratio of blocks actually elapsed over the expected number of blocks. The expected count is 2,016 mints times 30 blocks per mint, that is, 60,480 blocks. The retarget is clamped to a factor of four in either direction per period.
 
 A hard cap of ten mints per block prevents one party with surplus hashpower from sweeping every block. The eleventh `mine()` call in the same block reverts.
 
@@ -90,7 +90,7 @@ Genesis is priced at 0.01 ETH per 1,000 NONCE, fixed. A fully subscribed genesis
 
 The mining schedule halves every 100,000 successful mints. Era zero pays 100 NONCE per mint, era one pays 50, era two pays 25, and so on. In practice the schedule terminates at era four because the cumulative reward up to that point reaches the 18.9M mining cap.
 
-Target throughput is one mint per minute on average. With Ethereum's twelve-second blocks, that translates to a difficulty retarget every 33.6 hours of real time, assuming the network mines at exactly the target rate. The retarget mechanism corrects for deviations within a factor of four per period.
+Target throughput is one mint per minute on average. With Base's two-second blocks, that translates to a difficulty retarget every 33.6 hours of real time, assuming the network mines at exactly the target rate. The retarget mechanism corrects for deviations within a factor of four per period.
 
 ## Seeding strategy
 
@@ -107,10 +107,10 @@ The interesting property of `partialSeed` is what it does with the unsold genesi
 
 ```solidity
 function _seedBody() internal {
-    uint256 eth    = genesisEthRaised;
-    uint256 pickLP = genesisMinted;
-    _mint(address(this), pickLP + MINING_SUPPLY);
-    // create the pool with (eth, pickLP) as liquidity
+    uint256 eth     = genesisEthRaised;
+    uint256 tokenLP = genesisMinted;
+    _mint(address(this), tokenLP + MINING_SUPPLY);
+    // create the pool with (eth, tokenLP) as liquidity
 }
 ```
 
@@ -172,7 +172,7 @@ After three days, if seeding has not succeeded, the system effectively becomes a
 
 ## Verification
 
-The contract source is published under the MIT license alongside its build configuration. After deployment to any chain, the source can be verified on Etherscan, Sourcify, or any compatible explorer. The compiled bytecode, the constructor arguments, and the CREATE2 salt are reproducible from the source.
+The contract source is published under the MIT license alongside its build configuration. The deployed instance on Base mainnet (`0xE7bADd12bdf070e925A55A98c981f3aBAB4f20cc`) is verified on Basescan; the same source can be verified on Sourcify or any other compatible explorer. The compiled bytecode, the constructor arguments, and the CREATE2 salt are reproducible from the source.
 
 The mining algorithm is implemented in Rust, compiled to WebAssembly, and runs entirely in the user's browser. The Rust source is in the same repository as the contract. The compiled WASM bundle is published as a static asset alongside the frontend, served directly from disk with no server-side computation.
 
@@ -194,23 +194,25 @@ The reputation is the contract's on-chain state. `totalMints`, `totalMiningMinte
 
 The behavior is verified by the source. The bytecode is the source, the source is the spec, and both are immutable. The hook reverts on liquidity removal. The mint function refuses to pay more than `MINING_SUPPLY`. The `claimFees` function only moves ETH the contract has accumulated, never tokens it has minted. Each of these guarantees is unconditional and originates from the hook itself.
 
-When the canonical ERC-8004 Identity Registry is deployed on mainnet (`0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`), the controller registers NONCE with a single call to `register(agentURI)`. The `agentURI` points to a hosted JSON file (`/agent.json`) that lists the contract's capabilities, endpoints, and validation hooks. Indexers like 8004scan pick the new agent up automatically from the `Transfer` event of the registry NFT.
+NONCE is registered as **Agent #51672** on the canonical ERC-8004 Identity Registry (`0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`) on Base mainnet. The registration points to a hosted JSON manifest (`/agent.json`) that lists the contract's capabilities, endpoints, and validation hooks. Indexers like 8004scan resolve the agent automatically from the `Transfer` event of the registry NFT and surface it at `https://8004scan.io/agents/base/51672`.
 
 ## Miner Agent NFTs
 
-A separate ERC-721 collection, `MinerAgent`, gives each NONCE participant an on-chain identity in the ERC-8004 sense without modifying the core contract. The mapping is one NFT per address, claimable once, soulbound after mint. Anyone whose NONCE balance is non-zero may call `claim()` to mint their own agent NFT. Genesis buyers, miners, and aftermarket buyers all qualify; the only requirement is that the wallet currently holds NONCE.
+A separate ERC-721 collection, `MinerAgent`, deployed at `0x45F45e470E974E720614d31815c42dbA18F8b4cF` on Base, gives each NONCE participant an on-chain identity in the ERC-8004 sense without modifying the core token contract. The mapping is one NFT per address, claimable once, soulbound after mint. Any wallet holding at least 1 NONCE may call `claim()` to mint its own agent NFT. Genesis buyers, miners, and aftermarket buyers all qualify equally; the only requirement is the live balance check at claim time.
 
-The metadata is generated entirely on-chain. `tokenURI` returns a base64-encoded JSON whose `image` field embeds a base64-encoded SVG rendered from live state. The SVG shows the agent ID, the truncated wallet address, the current NONCE balance, and a tier label that scales with holdings: Initiate, Bronze, Silver, or Gold. There are no hosted images, no IPFS pins, and no central server in the loop. Every render is reproducible from the contract.
+The artwork is a curated set of ten 1-of-1 pieces, organised as five tiers times two variants, each piece named after a state in a transaction lifecycle: Genesis Signal, Pending State, Ordered Execution, Verified State, Replay Barrier, Finalized State, Archived State, Echo State, Transition State, and Confirmation State. The tier scales dynamically with the holder's live NONCE balance — Initiate (under 1,000 NONCE), Bronze (1k–10k), Silver (10k–100k), Gold (100k–1M), Platinum (1M and above) — so a wallet that grows from Silver to Gold visibly upgrades its badge without any on-chain action. The variant is fixed at mint time, hashed deterministically from the tokenId via `keccak256(abi.encode(tokenId, "nonce-variant")) % 2`, so two holders at the same tier may still display different artwork.
+
+The PNGs are pinned to IPFS as a single CIDv1 dag-pb folder (`bafybeiauhz7wvnvbw3iqvlpygpinhqfuv4ldh6mv3d3zb7r6kfcztcn6lq`), content-addressed and provably immutable: even if the original pin disappears tomorrow, anyone re-pinning the same files reproduces the same CID and the URLs keep resolving. Metadata is served from `/api/agent/<tokenId>.json` on the project website; the endpoint reads `ownerOf(tokenId)` on `MinerAgent` and `balanceOf(owner)` on `Nonce` live on every fetch, then assembles OpenSea-compatible JSON that points at the matching IPFS image. Each token's metadata also carries a back-reference to the parent ERC-8004 agent (Base #51672), so an indexer that picks up an NFT can resolve the registry entry without a separate hint.
 
 Transfers between EOAs revert with `Soulbound()`. Burning and minting are both allowed at the protocol level so that future upgrades to the soulbound semantics are possible without a redeploy, but no burn function is exposed to users today. The NFT is meant to remain attached to the wallet that earned it.
 
-The collection is intentionally lightweight. It does not give holders new rights over NONCE. It does not change the supply distribution. It does not introduce new tradeable surface area. Its job is to make ownership of NONCE legible to agent-aware tooling and to give participants a single, queryable identity that ERC-8004 indexers can resolve.
+The collection is intentionally lightweight. It does not give holders new rights over NONCE. It does not change the supply distribution. It does not introduce new tradeable surface area. Its job is to make ownership of NONCE legible to agent-aware tooling and to give participants a single, queryable identity that ERC-8004 indexers can resolve back to the parent NONCE agent on the registry.
 
 ## Limits and caveats
 
 The contract has no upgrade path. If a critical bug is discovered post-launch, there is no fix. The mitigation is the same as Bitcoin's: keep the surface small, audit before deploy, deploy code that has been forked from a contract running in production elsewhere.
 
-Mining on Ethereum mainnet costs real gas. At twenty gwei a `mine()` transaction costs roughly five dollars worth of ETH. The reward in dollar terms must exceed this for mining to remain economically rational. As the price of NONCE in the AMM falls below the mining cost, hashrate drops, the network produces fewer than one mint per minute, and difficulty retargets downward. Equilibrium price is whatever clears that condition.
+Mining costs gas. On Base, where NONCE is deployed, a `mine()` transaction costs cents — sub-cent at typical base fees, low single-digit cents under congestion. The reward in dollar terms must still exceed this for mining to remain economically rational. As the price of NONCE in the AMM falls below the mining cost, hashrate drops, the network produces fewer than one mint per minute, and difficulty retargets downward. Equilibrium price is whatever clears that condition.
 
 Address-binding makes solutions unstealable from the mempool but does nothing against a miner who controls multiple wallets. A miner with surplus hashrate can mine to any address they own. This is the same property Bitcoin has and is not considered a problem; the cost of computing power is what discourages over-extraction.
 
