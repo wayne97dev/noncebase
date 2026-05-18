@@ -21,12 +21,12 @@ export function HeroCity() {
         <defs>
           <linearGradient id="hero-sky" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#0a0a0c" />
-            <stop offset="55%" stopColor="#0e0c08" />
-            <stop offset="100%" stopColor="#181308" />
+            <stop offset="55%" stopColor="#0c0c0e" />
+            <stop offset="100%" stopColor="#141418" />
           </linearGradient>
           <radialGradient id="hero-glow" cx="50%" cy="55%" r="55%">
-            <stop offset="0%" stopColor="#f4c430" stopOpacity="0.08" />
-            <stop offset="100%" stopColor="#f4c430" stopOpacity="0" />
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.08" />
+            <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
           </radialGradient>
           <linearGradient id="hero-fade" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#08080a" stopOpacity="0" />
@@ -42,11 +42,11 @@ export function HeroCity() {
               Walker's feet sit at y=0; head extends up to y=-32. */}
           <g id="walker">
             {/* head */}
-            <circle cx="0" cy="-29" r="3" fill="#f4c430" />
+            <circle cx="0" cy="-29" r="3" fill="#ffffff" />
             {/* body (slight taper, shoulders > waist) */}
             <path
               d="M-3.2,-26 L3.2,-26 L2.6,-12 L-2.6,-12 Z"
-              fill="#f4c430"
+              fill="#ffffff"
             />
             {/* arms (subtle swing implied via positions) */}
             <line
@@ -54,7 +54,7 @@ export function HeroCity() {
               y1="-23"
               x2="-3.8"
               y2="-14"
-              stroke="#f4c430"
+              stroke="#ffffff"
               strokeWidth="1.2"
               strokeLinecap="round"
             />
@@ -63,7 +63,7 @@ export function HeroCity() {
               y1="-23"
               x2="3.8"
               y2="-14"
-              stroke="#f4c430"
+              stroke="#ffffff"
               strokeWidth="1.2"
               strokeLinecap="round"
             />
@@ -73,7 +73,7 @@ export function HeroCity() {
               y1="-12"
               x2="-1.8"
               y2="-1"
-              stroke="#f4c430"
+              stroke="#ffffff"
               strokeWidth="1.6"
               strokeLinecap="round"
             />
@@ -82,7 +82,7 @@ export function HeroCity() {
               y1="-12"
               x2="1.8"
               y2="-1"
-              stroke="#f4c430"
+              stroke="#ffffff"
               strokeWidth="1.6"
               strokeLinecap="round"
             />
@@ -94,7 +94,7 @@ export function HeroCity() {
         <rect width="1600" height="720" fill="url(#hero-glow)" />
 
         {/* ----- Far skyline (depth 1) ----- */}
-        <g opacity="0.18" stroke="#f4c430" fill="none" strokeWidth="1">
+        <g opacity="0.18" stroke="#ffffff" fill="none" strokeWidth="1">
           <rect x="40" y="380" width="60" height="200" />
           <rect x="120" y="320" width="44" height="260" />
           <rect x="180" y="360" width="80" height="220" />
@@ -119,7 +119,7 @@ export function HeroCity() {
         </g>
 
         {/* ----- Mid skyline (depth 2) ----- */}
-        <g opacity="0.4" stroke="#f4c430" fill="none" strokeWidth="1.2" strokeLinejoin="round">
+        <g opacity="0.4" stroke="#ffffff" fill="none" strokeWidth="1.2" strokeLinejoin="round">
           {/* Left cluster */}
           <rect x="60" y="300" width="80" height="280" />
           <line x1="60" y1="340" x2="140" y2="340" />
@@ -178,9 +178,9 @@ export function HeroCity() {
         </g>
 
         {/* ----- Foreground (depth 3) ----- */}
-        <g stroke="#f4c430" fill="none" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" opacity="0.85">
+        <g stroke="#ffffff" fill="none" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" opacity="0.85">
           {/* Big market canopy left */}
-          <polygon points="120,460 320,400 520,460 520,490 120,490" fill="rgba(244,196,48,0.04)" />
+          <polygon points="120,460 320,400 520,460 520,490 120,490" fill="rgba(255, 255, 255, 0.04)" />
           <line x1="320" y1="400" x2="320" y2="380" />
           <line x1="320" y1="380" x2="280" y2="380" />
           <line x1="320" y1="380" x2="360" y2="380" />
@@ -196,7 +196,7 @@ export function HeroCity() {
           <line x1="400" y1="530" x2="460" y2="530" />
 
           {/* Central tower */}
-          <rect x="900" y="180" width="140" height="400" fill="rgba(244,196,48,0.03)" />
+          <rect x="900" y="180" width="140" height="400" fill="rgba(255, 255, 255, 0.03)" />
           <line x1="900" y1="220" x2="1040" y2="220" />
           <line x1="900" y1="260" x2="1040" y2="260" />
           <line x1="900" y1="300" x2="1040" y2="300" />
@@ -209,12 +209,12 @@ export function HeroCity() {
           <line x1="940" y1="180" x2="940" y2="580" />
           <line x1="980" y1="180" x2="980" y2="580" />
           <line x1="1020" y1="180" x2="1020" y2="580" />
-          <polygon points="900,180 970,130 1040,180" fill="rgba(244,196,48,0.05)" />
+          <polygon points="900,180 970,130 1040,180" fill="rgba(255, 255, 255, 0.05)" />
           <line x1="970" y1="130" x2="970" y2="80" />
-          <circle cx="970" cy="74" r="6" fill="rgba(244,196,48,0.5)" />
+          <circle cx="970" cy="74" r="6" fill="rgba(255, 255, 255, 0.5)" />
 
           {/* Right pavilion canopy */}
-          <polygon points="1080,470 1240,420 1400,470 1400,500 1080,500" fill="rgba(244,196,48,0.04)" />
+          <polygon points="1080,470 1240,420 1400,470 1400,500 1080,500" fill="rgba(255, 255, 255, 0.04)" />
           <line x1="1240" y1="420" x2="1240" y2="400" />
           <circle cx="1240" cy="395" r="4" />
           <line x1="1130" y1="500" x2="1130" y2="580" />
@@ -237,7 +237,7 @@ export function HeroCity() {
           <circle cx="855" cy="445" r="3" />
 
           {/* Far right antenna stack */}
-          <rect x="1480" y="380" width="50" height="200" fill="rgba(244,196,48,0.03)" />
+          <rect x="1480" y="380" width="50" height="200" fill="rgba(255, 255, 255, 0.03)" />
           <line x1="1480" y1="420" x2="1530" y2="420" />
           <line x1="1480" y1="460" x2="1530" y2="460" />
           <line x1="1480" y1="500" x2="1530" y2="500" />
@@ -247,13 +247,13 @@ export function HeroCity() {
         </g>
 
         {/* Ground line */}
-        <g stroke="#f4c430" strokeLinecap="round">
+        <g stroke="#ffffff" strokeLinecap="round">
           <line x1="0" y1="600" x2="1600" y2="600" strokeWidth="1" opacity="0.55" />
           <line x1="0" y1="610" x2="1600" y2="610" strokeWidth="0.5" opacity="0.25" />
         </g>
 
         {/* Subtle ground tick marks */}
-        <g stroke="#f4c430" strokeWidth="0.8" opacity="0.18">
+        <g stroke="#ffffff" strokeWidth="0.8" opacity="0.18">
           <line x1="60" y1="600" x2="60" y2="608" />
           <line x1="180" y1="600" x2="180" y2="608" />
           <line x1="300" y1="600" x2="300" y2="608" />
