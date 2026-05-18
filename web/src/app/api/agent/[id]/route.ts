@@ -205,7 +205,9 @@ export async function GET(
     name: `Nonce Miner Agent #${tokenId} — ${variantName}`,
     description:
       `${variantName.toUpperCase()}. NONCE Miner Agent — soulbound ERC-8004 ` +
-      "identity. The tier badge reflects the holder's live NONCE balance, " +
+      "identity attached to the autonomous Nonce agent registered as " +
+      "**Agent #51672** on the canonical ERC-8004 IdentityRegistry on " +
+      "Base. The tier badge reflects the holder's live NONCE balance, " +
       "so the NFT visually upgrades as you accumulate. The variant is " +
       "fixed at mint time, hashed deterministically from the tokenId. " +
       "Minimum 1 NONCE held to claim; transfers are blocked at the " +
@@ -213,7 +215,9 @@ export async function GET(
     // variantPath is already a full ipfs:// URI — no origin prefix needed.
     image: variantPath,
     background_color: tier.bg,
-    external_url: `https://basescan.org/address/${owner}`,
+    // External link points to the agent's 8004scan page (parent identity)
+    // so a viewer on OpenSea can jump straight to the registry-level view.
+    external_url: "https://8004scan.io/agents/base/51672",
     attributes: [
       { trait_type: "Tier", value: tier.name },
       { trait_type: "State", value: variantName },
@@ -234,6 +238,10 @@ export async function GET(
       },
       { trait_type: "Agent Wallet", value: owner },
       { trait_type: "Tier Color", value: tier.color },
+      // ERC-8004 backlink — every NFT in this collection is owned by the
+      // same parent agent on the on-chain ERC-8004 IdentityRegistry.
+      { trait_type: "ERC-8004 Agent", value: "Base #51672" },
+      { trait_type: "Agent Network", value: "Base" },
     ],
   };
 

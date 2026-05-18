@@ -24,15 +24,17 @@ export async function GET() {
   const metadata = {
     name: "Nonce Miner Agent",
     description:
-      "Soulbound ERC-8004 identity NFTs for $NONCE participants. One per " +
-      "address, claimable once a wallet holds at least 1 NONCE. The tier " +
-      "badge — Initiate, Bronze, Silver, Gold, Platinum — is computed " +
-      "live from the holder's current NONCE balance, so the NFT visibly " +
-      "upgrades as you accumulate. 10 unique artworks (5 tiers × 2 " +
-      "variants), each representing a transaction lifecycle state on " +
-      "Ethereum. Tokens are non-transferable: a transfer attempt reverts " +
-      "at the contract level. Royalties are 0% by design — these are " +
-      "identity, not assets.",
+      "Soulbound ERC-8004 identity NFTs attached to **Nonce — Agent " +
+      "#51672** on the canonical ERC-8004 IdentityRegistry on Base " +
+      "(https://8004scan.io/agents/base/51672). One per address, " +
+      "claimable once a wallet holds at least 1 NONCE. The tier badge — " +
+      "Initiate, Bronze, Silver, Gold, Platinum — is computed live from " +
+      "the holder's current NONCE balance, so the NFT visibly upgrades " +
+      "as you accumulate. 10 unique artworks (5 tiers × 2 variants), " +
+      "each representing a transaction lifecycle state on Ethereum. " +
+      "Tokens are non-transferable: a transfer attempt reverts at the " +
+      "contract level. Royalties are 0% by design — these are identity, " +
+      "not assets.",
     image: `${IPFS_ROOT}/collection.png`,
     banner_image: `${IPFS_ROOT}/collection.png`,
     // Featured = Platinum tier's Confirmation State, the most ornate

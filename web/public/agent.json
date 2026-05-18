@@ -85,6 +85,14 @@
     "minerAgent": {
       "description": "Soulbound ERC-721 collection where NONCE participants can claim a per-address NFT identity (one per wallet). 10 artworks total: 5 tiers x 2 variants. Tier scales dynamically with live NONCE holdings - Initiate (< 1,000), Bronze (1k-9.9k), Silver (10k-99.9k), Gold (100k-999.9k), Platinum (>= 1M). Variant is fixed at mint, hashed deterministically from the tokenId. Each artwork represents a transaction lifecycle state. Minimum 1 NONCE held to claim.",
       "address": "0x45F45e470E974E720614d31815c42dbA18F8b4cF"
+    },
+    "agentRegistration": {
+      "chain": "base",
+      "chainId": 8453,
+      "registryAddress": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "agentId": 51672,
+      "owner": "0x51fbf2b3eFf8D56730551C750426FcaBf5A4aE6a",
+      "directory": "https://8004scan.io/agents/base/51672"
     }
   }
 }
